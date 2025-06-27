@@ -85,3 +85,12 @@ py.extension_module('mapflpy_fortran',
   install: true,
 )
 
+py.install_sources([
+  'mapflpy/__init__.py',
+  'mapflpy/run.py',
+  'mapflpy/tracer.py',
+  'mapflpy/utils.py',
+  ],
+  subdir: 'mapflpy'
+)
+
