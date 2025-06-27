@@ -81,7 +81,7 @@ py.extension_module('mapflpy_fortran',
     hdf5,
     #omp_dep,
   ],
-  subdir: 'mapflpy',
+  subdir: 'mapflpy/fortran',
   install: true,
 )
 
@@ -92,5 +92,11 @@ py.install_sources([
   'mapflpy/utils.py',
   ],
   subdir: 'mapflpy'
+)
+
+py.install_sources([
+  'mapflpy/fortran/__init__.py',
+  ],
+  subdir: 'mapflpy/fortran'
 )
 

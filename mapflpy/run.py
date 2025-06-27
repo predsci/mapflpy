@@ -44,7 +44,8 @@ def run_tracing_subprocess(pipe, br, bt, bp, lp, fwd, bwd, **mapfl_params):
         error occurs) through the provided pipe before closing it.
     """
     try:
-        import mapflpy_fortran
+        #import mapflpy_fortran
+        import mapflpy.fortran as mapflpy_fortran
 
         tracer = Tracer(mapflpy_fortran, br, bt, bp, lp, **mapfl_params)
         tracer.load_fields()
@@ -152,7 +153,8 @@ def tracer_listener(pipe, br, bt, bp, lp=None, **mapfl_params):
     None
         The function runs indefinitely until a "STOP" command is received. It does not return any value.
     """
-    import mapflpy_fortran
+    # import mapflpy_fortran
+    import mapflpy.fortran as mapflpy_fortran
     tracer = Tracer(mapflpy_fortran, br, bt, bp, lp, **mapfl_params)
     while True:
         try:
