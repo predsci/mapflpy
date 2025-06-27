@@ -44,9 +44,9 @@ def run_tracing_subprocess(pipe, br, bt, bp, lp, fwd, bwd, **mapfl_params):
         error occurs) through the provided pipe before closing it.
     """
     try:
-        import mapflpy
+        import mapflpy_fortran
 
-        tracer = Tracer(mapflpy, br, bt, bp, lp, **mapfl_params)
+        tracer = Tracer(mapflpy_fortran, br, bt, bp, lp, **mapfl_params)
         tracer.load_fields()
         if fwd and bwd:
             tracer.prep_tracing('f')
@@ -152,8 +152,8 @@ def tracer_listener(pipe, br, bt, bp, lp=None, **mapfl_params):
     None
         The function runs indefinitely until a "STOP" command is received. It does not return any value.
     """
-    import mapflpy
-    tracer = Tracer(mapflpy, br, bt, bp, lp, **mapfl_params)
+    import mapflpy_fortran
+    tracer = Tracer(mapflpy_fortran, br, bt, bp, lp, **mapfl_params)
     while True:
         try:
             method, *args = pipe.recv()
@@ -222,7 +222,7 @@ def inter_domain_tracing_caller(br_cor='', bt_cor='', bp_cor='',
 
     Notes
     -----
-    The function uses two separate processes to avoid sharing `mapflpy` objects between domains.
+    The function uses two separate processes to avoid sharing `mapflpy_fortran` objects between domains.
     """
     # setup the pipes
     cor_reciever, cor_sender = mp.Pipe()
@@ -325,7 +325,7 @@ def inter_domain_tracing_caller(br_cor='', bt_cor='', bp_cor='',
         boundary_recross[inds_helio] = recross_hel
         traced_to_boundary[inds_helio] = bndry_hel
 
-    # kill the mapflpy subprocess pipes.
+    # kill the mapflpy_fortran subprocess pipes.
     cor_reciever.send(('STOP',))
     hel_reciever.send(('STOP',))
     cor_reciever.close()
@@ -347,11 +347,11 @@ def inter_domain_tracing_from_cor(cor_reciever, hel_reciever, direction='f', lp=
     Parameters
     ----------
     cor_reciever : multiprocessing.connection.Connection
-        The coronal domain pipe that does the mapflpy tracing (see `tracer_listener`).
+        The coronal domain pipe that does the mapfl tracing (see `tracer_listener`).
     hel_reciever : multiprocessing.connection.Connection
-        The heliospheric domain pipe that does the mapflpy tracing (see `tracer_listener`).
+        The heliospheric domain pipe that does the mapfl tracing (see `tracer_listener`).
     direction : str
-        The direction of the mapflpy tracings. This must be either 'f' or 'b' (forwards or backwards). Default is 'f'.
+        The direction of the mapfl tracings. This must be either 'f' or 'b' (forwards or backwards). Default is 'f'.
     lp : any
         Launch points for fieldline tracing.
     maxiter : int, optional
@@ -472,11 +472,11 @@ def inter_domain_tracing_from_hel(cor_reciever, hel_reciever, direction='f', lp=
     Parameters
     ----------
     cor_reciever : multiprocessing.connection.Connection
-        The coronal domain pipe that does the mapflpy tracing (see `tracer_listener`).
+        The coronal domain pipe that does the mapfl tracing (see `tracer_listener`).
     hel_reciever : multiprocessing.connection.Connection
-        The heliospheric domain pipe that does the mapflpy tracing (see `tracer_listener`).
+        The heliospheric domain pipe that does the mapfl tracing (see `tracer_listener`).
     direction : str
-        The direction of the mapflpy tracings. This must be either 'f' or 'b' (forwards or backwards). Default is 'f'.
+        The direction of the mapfl tracings. This must be either 'f' or 'b' (forwards or backwards). Default is 'f'.
     lp : any
         Launch points for fieldline tracing.
     maxiter : int, optional

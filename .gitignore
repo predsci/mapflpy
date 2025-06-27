@@ -5,6 +5,8 @@ README_build_instructions.md
 
 # Meson compile folders
 bbdir/
+mapflpy_fortran-f2pywrappers2.f90
+mapflpy_fortranmodule.c
 
 # Local testing
 local_testing/
