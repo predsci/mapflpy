@@ -37,3 +37,5 @@ dependencies:
   - python-build
   - twine
   - pip
+  - pip:
+    - psi-io

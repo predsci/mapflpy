@@ -1,13 +1,15 @@
+"""
+Core class for managing tracing with mapflpy_fortran.
+"""
 import os
-import sys
 from collections import namedtuple, ChainMap
 from types import MappingProxyType
 from typing import Tuple, Literal, Iterable, Mapping
 
 import numpy as np
-from psipytools.geometry.points import fibonacci_sphere
 
-from psipytools.psihdf import read_hdf_by_value
+from psi_io import read_hdf_by_value
+from .utils import fetch_default_launch_points
 
 # ------------------------------------------------------------------------------
 # The following MAPFL_PARAMS are modeled after the mapfl.in file. However, the
@@ -47,27 +49,22 @@ FIELD_DEFAULTS = MappingProxyType({
 })
 
 
-# @lru_cache(maxsize=32)
-def fetch_default_launch_points(n):
-    p, t = fibonacci_sphere(n)
-    return np.array((np.full_like(t, 1.01), t, p), order='F')
 
 
 class Tracer:
-    """Fieldline tracing wrapper class for Mapflpy.
+    """Fieldline tracing wrapper class for mapflpy.
 
     Attributes
     ----------
-    _mapflpy : mapflpy.so
-        Path to mapfl shared object directory.
+    _mapfl : Python extension module
+        The currently imported instance of the mapflpy_fortran.mapfl Fortran interface.
     _mapfl_params : dict
-        Dictionary of key-value pairs to instantiate the mapflpy object. The
-        keys used to instantiate mapflpy must have a trailing underscore.
+        Dictionary of key-value pairs to instantiate the mapflpy_fortran object. The
+        keys used to instantiate mapflpy_fortran must have a trailing underscore.
     _launch_points : numpy.ndarray
-        Seed points for the fieldline traces in Heliographic coordinates.
-    _trace_rgb : numpy.ndarray
-        RGB values for each field line. Must have the same shape as the
-        ``_launch_points`` attribute *i.e.* Nx3.
+        Launch points for fieldline tracing.
+    _bfiles : Tuple[str, str, str])
+        A tuple containing the paths to the 3D datafiles of the B field vector components Br, Bt, Bp.
     """
     _default_params = MappingProxyType({
         'integrate_along_fl_': False,
@@ -154,41 +151,39 @@ class Tracer:
         'write_traces_as_xyz_': True
     })
 
-    def __init__(self, mapflpy, br, bt, bp, lp=None, **mapfl_params):
-        """Constructor for Tracer object given launch points and mag vr_files.
+    def __init__(self, mapflpy_fortran, br, bt, bp, lp=None, **mapfl_params):
+        """Constructor for Tracer object given launch points and B files.
 
-        This method calls Tracer, a lightweight wrapper which calls mapflpy. This
+        This method calls Tracer, a lightweight wrapper which calls mapfl. This
         requires the user to have the mapfl.so compiled and accessible (see the
         References section below for more details). The ``launch_pts``
-        parameter can be either a path to an ``ascii`` file or an ``ndarray``.
-        Both the former (table) and the latter must have a Nx3 or Nx6 shape,
-        where the columns are: the launch points in Heliographic coordinates
-        (Rsun, rad, rad), or *both* the launch points in Heliographic coordinates
-        and the field lines' RGB values (R, G, B). When no RGB values are specified,
-        a random color from the HSV colorspace (converted to RGB) will be assigned.
+        parameter is an ``ndarray``. that must have a 3xN  shape, where the
+        columns are: the launch points in Heliographic coordinates (Rsun, rad, rad).
 
         Parameters
         ----------
+        mapflpy_fortran: Python extension module
+            The currently imported mapflpy_fortran shared object module.
         br_path : str | pathlib.Path
             Path to Br hdf4 or hdf5 file.
         bt_path : str | pathlib.Path
             Path to Bt hdf4 or hdf5 file.
         bp_path : str | pathlib.Path
             Path to Bt hdf4 or hdf5 file.
-        launch_pts : str | pathlib.Path | numpy.ndarray
-            Launch points for fieldline tracing. This can be either a path to an
-            ``ascii`` file or an ``ndarray``.
-        mapflpy_path : str | pathlib.Path, default = None
-            Path to mapfl.so directory. When no directory is supplied, the ``Tracer``
-            object will search for the mapfl shared object in the user's CORHEL_HOME
-            path.
+        launch_pts : numpy.ndarray, optional
+            A 3xN array of seed point locations for the fieldline traces in Heliographic coordinates.
+            These should be floating point values ordered in radius, theta, phi (r,t,p) where
+            - r is in units of solar radii (1 is the unit-sphere)
+            - t is co-latitude in radians (0-pi, 0 is the north pole, pi is the south pole).
+            - p is longitude in radians (0-2pi).
+            If not provided, `utils.fetch_default_launch_points` is called to generate them on a sphere.
         **mapfl_params : optional
             Keyword arguments are passes to the ``_load_params()`` function, which
             overrides the corresponding key-value pair in the MAPFL_PARAMS dict.
         """
 
         self._bfiles = BFiles(br, bt, bp)
-        self._mapfl = mapflpy.mapfl
+        self._mapfl = mapflpy_fortran.mapfl
         self._mapfl_params = ChainMap(mapfl_params | FIELD_DEFAULTS, self._default_params)
         self._launch_points = lp
 
@@ -203,8 +198,8 @@ class Tracer:
         return self._mapfl
 
     @mapfl.setter
-    def mapfl(self, mapflpy):
-        self._mapfl = mapflpy.mapfl
+    def mapfl(self, mapflpy_fortran):
+        self._mapfl = mapflpy_fortran.mapfl
 
     @property
     def bfiles(self):
@@ -246,7 +241,7 @@ class Tracer:
     def set_launch_points(self, lp: Iterable):
         self._launch_points = np.array(lp)
 
-    def get_mapflpy_id(self):
+    def get_mapflpy_fortran_id(self):
         return id(self._mapfl)
 
     def load_default_lps(self, n=128):
@@ -303,187 +298,20 @@ class Tracer:
         return Traces(traces[:, :, :], s1, mask[0, :])
 
     def run(self):
-        """Calls ``mapflpy.run()`` with provisioned parameters."""
+        """Calls ``mapfl.run()`` with provisioned parameters."""
         self._mapfl.run(**self._mapfl_params)
 
     def init(self, init_params):
-        """Calls ``mapflpy.init()`` with provisioned init parameters.
+        """Calls ``mapfl.init()`` with provisioned init parameters.
 
-        *NOTE: In the current state of mapflpy, this routine is not fully implemented.
+        *NOTE: In the current state of mapflpy_fortran, this routine is not fully implemented.
         In fact, it does nothing. This method is provided with future development
-        of mapflpy in mind. For now, the only way to modify the parameters used
+        of mapflpy_fortran in mind. For now, the only way to modify the parameters used
         by mapfl is to call* ``run()``.
         """
         self._mapfl.init(**init_params)
 
     def trace(self, trace_args):
-        """Calls ``mapflpy.trace()`` with provisioned trace arguments."""
+        """Calls ``mapfl.trace()`` with provisioned trace arguments."""
         self._mapfl.trace(**trace_args)
 
-    # def get_lps_rgb(self):
-    #     """Getter for ``self._trace_rgb``"""
-    #     return self._trace_rgb
-    #
-    # def fwd_trace(self):
-    #     """Perform forward traces from each launch point with mapfl.
-    #
-    #     Returns
-    #     -------
-    #     tuple
-    #         - list[numpy.ndarray]
-    #             List of fieldline traces returned from ``_mapflpy.mapfl.trace()``.
-    #             This list is of length N, where N is the number of launch points.
-    #             Each element of this list is an Mx3 ndarray of the points making up
-    #             the given field line (in Heliographic coordinates) starting from
-    #             a launch point and tracing forward.
-    #         - list[bool]
-    #             Mask of length N, where N is the number of launch points, indicating
-    #             which of the returned field lines do not map back to the Sun's
-    #             surface, or rather ``self._mapfl_params["domain_r_min_"]``.
-    #     """
-    #     self._mapfl_params["trace_fwd_"] = True
-    #     self._mapfl_params["trace_bwd_"] = False
-    #     self.run()
-    #     traces_fwd = []
-    #     traces_fwd_map = np.zeros((len(self._launch_points))).astype(bool)
-    #     for i, lp in enumerate(self._launch_points):
-    #         trace_args = self._generate_trace_args(lp)
-    #         self.trace(trace_args)
-    #         svec_cleaned = trace_args['svec'][~np.isnan(trace_args['svec']).any(axis=1)]
-    #         traces_fwd_map[i] = svec_cleaned[-1][0] < self._mapfl_params["domain_r_min_"] + self._mapfl_params[
-    #             "ds_min_"]
-    #         traces_fwd.append(svec_cleaned)
-    #
-    #     return traces_fwd, traces_fwd_map
-    #
-    # def bwd_trace(self, flip=True):
-    #     """Perform backward traces from each launch point with mapfl.
-    #
-    #     Parameters
-    #     ----------
-    #     flip : bool, default = True
-    #         Reverse the ordering of the points that make up each fieldline *i.e.*
-    #         instead of the trace beginning at each respective launch point, the
-    #         launch point will be the final point of the ndarray.
-    #
-    #     Returns
-    #     -------
-    #     tuple
-    #         - list[numpy.ndarray]
-    #             List of fieldline traces returned from ``_mapflpy.mapfl.trace()``.
-    #             This list is of length N, where N is the number of launch points.
-    #             Each element of this list is an Mx3 ndarray of the points making up
-    #             the given field line (in Heliographic coordinates) starting from
-    #             a launch point and tracing backward.
-    #         - list[bool]
-    #             Mask of length N, where N is the number of launch points, indicating
-    #             which of the returned field lines do not map back to the Sun's
-    #             surface, or rather ``self._mapfl_params["domain_r_min_"]``.
-    #     """
-    #     self._mapfl_params["trace_fwd_"] = False
-    #     self._mapfl_params["trace_bwd_"] = True
-    #     self.run()
-    #     traces_bwd = []
-    #     traces_bwd_map = np.zeros((len(self._launch_points))).astype(bool)
-    #     for i, lp in enumerate(self._launch_points):
-    #         trace_args = self._generate_trace_args(lp)
-    #         self.trace(trace_args)
-    #         svec_cleaned = trace_args['svec'][~np.isnan(trace_args['svec']).any(axis=1)]
-    #         traces_bwd_map[i] = svec_cleaned[-1][0] < self._mapfl_params["domain_r_min_"] + self._mapfl_params[
-    #             "ds_min_"]
-    #         if flip:
-    #             traces_bwd.append(np.flip(svec_cleaned, axis=0))
-    #         else:
-    #             traces_bwd.append(svec_cleaned)
-    #     return traces_bwd, traces_bwd_map
-    #
-    # def fwd_bwd_trace(self):
-    #     """Perform forward and backward traces from each launch point with mapfl.
-    #
-    #     This function independently calls ``fwd_trace()`` then ``bwd_trace()``
-    #     and concatenates the (flipped) backward traces with the forward traces.
-    #     The final point of the backward trace is clipped because the first point
-    #     of the forward trace and the final point of the backward trace are the
-    #     same *viz.* the original launch point.
-    #
-    #     Just as ``fwd_trace()`` and ``bwd_trace()`` return a mask indicating
-    #     which field lines trace back to some "domain_r_min_", ``fwd_bwd_trace()``
-    #     conjunctively combines the forward and backward mapping masks.
-    #
-    #     Returns
-    #     -------
-    #     tuple
-    #         list[numpy.ndarray]
-    #             List of fieldline traces returned from ``_mapflpy.mapfl.trace()``.
-    #             This list is of length N, where N is the number of launch points.
-    #             Each element of this list is an (F+B-1)x3 ndarray of the points
-    #             making up field line (in Heliographic coordinates) where F is the
-    #             number of coordinates returned from the ``fwd_trace()`` call and
-    #             B is the number of points returned from the ``bwd_trace()`` call.
-    #         list[bool]
-    #             Mask of length N, where N is the number of launch points, indicating
-    #             which of the returned field lines do not map back to the Sun's
-    #             surface, or rather ``self._mapfl_params["domain_r_min_"]``.
-    #     """
-    #     fwd, fwd_map = self.fwd_trace()
-    #     bwd, bwd_map = self.bwd_trace()
-    #     mask = fwd_map & bwd_map
-    #     full_traces = [np.concatenate((bwd[i][:-1], fwd[i])) for i in range(len(mask))]
-    #     return full_traces, mask
-    #
-    # def get_rgb_colors(self):
-    #     """Return an Nx3 list of RGB colors corresponding to N launch points.
-    #
-    #     If ``Tracer`` object was instantiated with a ``launch_pts`` parameter
-    #     that contained user-defined RGB colors for each trace, this function
-    #     acts as a getter for ``_trace_rgb``. If not, this function generates
-    #     a list of RGB values using the psipytools ``get_random_rgb()`` function.
-    #
-    #     Returns
-    #     -------
-    #     numpy.ndarray | list[list[int]]
-    #         RGB values for each launch point in `_launch_points``
-    #     """
-    #     return self._trace_rgb
-    #     # if np.any(self._trace_rgb):
-    #     #     return self._trace_rgb.astype(int)
-    #     # else:
-    #     #     return get_random_color_sequence(len(self._launch_points))
-    #
-    # def _generate_trace_args(self, lp, buffer_size=DEFAULT_BUFFER_SIZE):
-    #     # These arguments are passed as keyword arguments to mapfl.trace()
-    #     # This class is primarily concerned with the output of svec, the Nx3
-    #     # array that holds the trace points returned from mapfl.
-    #
-    #     trace_args = dict(
-    #         s0=np.array(lp).astype(np.float64),
-    #         s1=np.zeros(3).astype(np.float64).T,
-    #         bs0=np.zeros(3).astype(np.float64).T,
-    #         bs1=np.zeros(3).astype(np.float64).T,
-    #         s=np.zeros(1).astype(np.float64).T,
-    #         traced_to_r_boundary=np.array([False]),
-    #         svec=np.full((3, buffer_size), np.nan).astype(np.float64).T,
-    #         svec_n=buffer_size,  # surprisingly not necessary
-    #     )
-    #     return trace_args
-    #
-    # def _load_mapflpy(self, mapflpy_path):
-    #     # mapflpy_path can be explicitly passed to this function if one wishes
-    #     # to define a particular version of mapflpy, or if MAPFLPY_DIR has not been
-    #     # added to the user's environment.
-    #     # Alternatively, one can add MAPFLPY_DIR=path/to/mapfl.so/dir to their
-    #     # .bashrc or .env (as outlined in the ``examples`` directory).
-    #
-    #     match mapflpy_path:
-    #         case None:
-    #             mapflpy_path = os.getenv("MAPFLPY")
-    #             assert mapflpy_path, "No MAPFLPY found in environ"
-    #             sys.path.append(mapflpy_path)
-    #             import mapflpy
-    #         case str():
-    #             sys.path.append(mapflpy_path)
-    #             import mapflpy
-    #         case _:
-    #             mapflpy = mapflpy_path
-    #
-    #     self.mapfl = mapflpy.mapfl
