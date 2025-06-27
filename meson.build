@@ -46,8 +46,10 @@ fortranobject_c = incdir_f2py / 'fortranobject.c'
 inc_np = include_directories(incdir_numpy, incdir_f2py)
 quadmath_dep = fc.find_library('quadmath', required: false)
 
-# HDF5 dependencies (meson knows how to find this for specific languages)
-hdf5_dep = dependency('hdf5', language: 'fortran')
+# HDF5 dependencies (meson seems to know how to find this for specific languages)
+hdf5 = dependency('hdf5', required: true)
+hdf5hl_fortran = declare_dependency(link_args : ['-lhdf5hl_fortran'], dependencies : [hdf5])
+hdf5_fortran = declare_dependency(link_args : ['-lhdf5_fortran'], dependencies : [hdf5])
 
 # OpenMP (meson will fill in the right flags for each compiler)
 # COMMENT FOR NOW, but might be needed for future OpenMP implementations in mapflpy
@@ -74,7 +76,9 @@ py.extension_module('mapflpy_fortran',
   dependencies : [
     py_dep,
     quadmath_dep,
-    hdf5_dep
+    hdf5hl_fortran,
+    hdf5_fortran,
+    hdf5,
     #omp_dep,
   ],
   subdir: 'mapflpy',
