@@ -1,0 +1,5 @@
+{'real': {
+'kind(1.0d0)': 'double',
+'kind(1.0e0)': 'float',
+'r_typ': 'double',
+}}

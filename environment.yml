@@ -1,0 +1,39 @@
+# While mapflpy should be easy to pip install, it requires HDF libraries.
+#
+# Generally we recommend installing the python HDF packages using conda.
+# This makes it simpler to ensure that the underlying HDF5 and HDF4 libraries
+# are properly set up and linked to the python interfaces.
+#
+# Here is a minimal conda recipe for the mapflpy dependencies that are
+# currently required to build the project. If you only wish to pip install
+# the project, you can remove everything past the minimal dependencies.
+#
+# To create the development environment:
+#   $ conda env create -f environment.yml
+#   $ conda activate mapflpy-dev
+#
+# To remove the development environment:
+#   $ conda remove --name mapflpy-dev --all
+#
+name: mapflpy-dev
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  # Minimal Dependencies
+  - python>=3.10
+  - h5py
+  - numpy
+
+  # Optional Dependencies
+  - pyhdf
+  - scipy
+
+  # Development Dependencies
+  - meson
+  - ninja
+  - meson-python
+  - gfortran
+  - python-build
+  - twine
+  - pip

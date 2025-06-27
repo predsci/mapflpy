@@ -1,0 +1,51 @@
+[build-system]
+build-backend = 'mesonpy'
+requires = [
+  "numpy",
+  "meson-python",
+  "meson",
+]
+
+[project]
+name = "mapflpy"
+description = "Python extension for tracing field lines using the Fortran tracer from MapFL"
+authors = [
+  {name = "Predictive Science Inc.", email = "webmaster@predsci.com"},
+  {name = "Ronald M. Caplan"},
+  {name = "Ryder Davidson"},
+  {name = "Cooper Downs"},
+]
+version = "0.9.0"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE.txt"]
+keywords = ["solar physics", "space physics", "heliophysics", "solar", "sun",
+  "science", "magnetohydrodynamic", "mas", "predsci", "psi"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "Natural Language :: English",
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering :: Astronomy",
+  "Topic :: Scientific/Engineering :: Physics",
+]
+requires-python = ">=3.10"
+dependencies = [
+  "numpy",
+  "h5py",
+]
+
+[project.urls]
+Homepage = "https://pypi.org/project/mapflpy"
+Repository = "https://github.com/predsci/mapflpy"
+
+[project.optional-dependencies]
+hdf4 = [
+    "pyhdf",
+]
+
+all = ["mapflpy[interp]"]
+
+[tool.setuptools.packages.find]
+exclude = ["src","local_testing","bbdir"]
