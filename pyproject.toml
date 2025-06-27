@@ -2,6 +2,7 @@
 build-backend = 'mesonpy'
 requires = [
   "numpy",
+  "h5py",
   "meson-python",
   "meson",
 ]
