@@ -1,10 +1,111 @@
 """
 Utility functions for mapflpy.
 """
+import importlib.util
 import math
 import random
 
 import numpy as np
+
+
+def check_shared_object(verbose=False):
+    """Check that the mapflpy_fortran shared object can found on this installation.
+
+    It seems that if the mapflpy_forran object can't be found, the subprocess pipes don't
+    always indicate exactly what happened.
+
+    This function will look for it and if it can't find it will raise an exception.
+
+    This *shouldn't* actually import the shared object in case we are worried about
+    thread safety (usually it gets imported by the tracing subprocess pipes, see `run.py`)
+    """
+    # first check if find_spec can run at all without crashing.
+    try:
+        module_spec = importlib.util.find_spec(".fortran.mapflpy_fortran", package='mapflpy')
+    except Exception as e:
+        raise Exception(f'{e}')
+
+    # if it returns none, that means it cant find the module
+    if module_spec is None:
+        raise Exception(f'\n### Could not find the mapflpy shared object for Fortran tracing!')
+    if verbose:
+        print(f'### check_shared_object: mapflpy.fortran.mapflpy_fortran information:')
+        print(module_spec)
+        print('')
+        # show which mapflpy modules have been loaded
+        import sys
+        for key in sys.modules.keys():
+            if key.startswith('mapflpy'):
+                print(sys.modules[key])
+
+
+def save_trace_info(filename, traces, index={}, dtype=np.float32):
+    """
+    Save a list of mapflpy field line traces to binary file using numpy savez .npz format.
+
+    This is required because sets of traces will generally not all have the same length.
+
+    WARNING: This implementation uses the fact that we can save an numpy array of objects
+    when `allow_pickle` is True. If we must save/load files w/out pickling for security
+    reasons, then the format must be refactored (e.g. making a giant 3D array filled
+    with NaNs and then compressing it or something and saving the index dict as a json with
+    the arrays separated out.
+
+    Parameters
+    ----------
+    filename : string
+        path/name of the .npz file to be written (e.g. test.npz).
+    traces : list
+        A python list of field line traces. Each trace should be a (3,N) numpy array, where
+        N is the number of points for each individual traces.
+    index : dict, optional
+        A dictionary that contains information about each trace. This can be whatever suites you
+        for the project/application but should only contain basic python types or numpy arrays.
+    dtype : numpy.dtype
+        The data type to save the trace data (e.g. np.float32 or np.float64). Default is np.float32.
+    """
+    # turn each individual trace into a 1D array with the requested datatype
+    traces_ravel = []
+    for trace in traces:
+        traces_ravel.append(trace.ravel().astype(dtype))
+
+    # convert the trace list to an "array" of numpy arrays
+    combo_array = np.array(traces_ravel, dtype=object)
+
+    # save the file and the index
+    np.savez(filename, combo_array=combo_array, index=index, allow_pickle=True)
+
+
+def load_trace_info(filename):
+    """
+    Load a list of mapflpy field line traces that was saved by `save_trace_info`.
+
+    Parameters
+    ----------
+    filename : string
+        path/name of the numpy .npz file that was saved by `save_trace_info`.
+
+    Returns
+    -------
+    traces : list
+        A python list of field line traces. Each trace is assumed tobe a (3,N) numpy array, where
+        N is the number of points for each individual traces.
+    index : dict
+        A dictionary that contains information about each trace.
+    """
+    # load the file
+    data = np.load(filename, allow_pickle=True)
+
+    # create the trace array by reshaping each of the raveled traces
+    traces = []
+    for trace1d in data['combo_array']:
+        nseg = int(len(trace1d)/3)
+        traces.append(np.reshape(trace1d, (3, nseg)))
+
+    # get the index back as a regular dictionary
+    index = dict(data['index'].item())
+
+    return traces, index
 
 
 def shift_phi_lps(lp, phi_shift=0.0):
@@ -81,13 +182,13 @@ def fibonacci_sphere(samples=100, randomize=False):
 
     points = []
     offset = 2./samples
-    increment = math.pi*(3. - math.sqrt(5.));
+    increment = math.pi*(3. - math.sqrt(5.))
 
     for i in range(samples):
         pid2 = .5*math.pi
         pi2 = 2*math.pi
 
-        y = ((i*offset) - 1) + (offset/2);
+        y = ((i*offset) - 1) + (offset/2)
         r = math.sqrt(1 - pow(y, 2))
 
         phi = ((i + rnd)%samples)*increment

@@ -8,7 +8,7 @@ import multiprocessing as mp
 import numpy as np
 
 from .tracer import Tracer, fetch_default_launch_points, Traces
-from .utils import shift_phi_traces, shift_phi_lps
+from .utils import shift_phi_traces, shift_phi_lps, check_shared_object
 
 def run_tracing_subprocess(pipe, br, bt, bp, lp, fwd, bwd, **mapfl_params):
     """
@@ -44,8 +44,7 @@ def run_tracing_subprocess(pipe, br, bt, bp, lp, fwd, bwd, **mapfl_params):
         error occurs) through the provided pipe before closing it.
     """
     try:
-        #import mapflpy_fortran
-        import mapflpy.fortran as mapflpy_fortran
+        import mapflpy.fortran.mapflpy_fortran as mapflpy_fortran
 
         tracer = Tracer(mapflpy_fortran, br, bt, bp, lp, **mapfl_params)
         tracer.load_fields()
@@ -109,18 +108,37 @@ def run_tracing_subprocess_caller(br, bt, bp, lp=None, fwd=True, bwd=True, **map
     -----
     The function uses the Python multiprocessing module to handle process creation and pipe communication.
     """
+    # check that the mapflpy_fortran module exists
+    check_shared_object()
+
+    # create the pipe
     ctx = mp.get_context('fork')
     reciever, sender = ctx.Pipe()
 
+    # call the tracing within the subprocess
     p = ctx.Process(target=run_tracing_subprocess, args=(sender, br, bt, bp, lp, fwd, bwd), kwargs=mapfl_params)
     p.start()
 
+    # check for an exception
     try:
         result = reciever.recv()
     except Exception as e:
         print("No result received from subprocess.")
         print(f"EXCEPTION: {str(e)}")
         result = None
+
+    # error out if the result from either case (success/failure) is still None
+    if result is None:
+        # check for an import error
+        try:
+            import mapflpy.fortran.mapflpy_fortran as mapflpy_fortran
+            print(f'asdfasdfasdf')
+        except Exception as e:
+            raise Exception(f'\n### mapflpy.fortran.mapflpy_fortran object could not be imported!'
+                            f'\n  Exception: {e}')
+        # otherwise complain about the value
+        raise ValueError("\n### The mapflpy trace returned no results. This shouldn't happen!"
+                         f"\n  result: {result}")
 
     return result
 
@@ -153,8 +171,7 @@ def tracer_listener(pipe, br, bt, bp, lp=None, **mapfl_params):
     None
         The function runs indefinitely until a "STOP" command is received. It does not return any value.
     """
-    # import mapflpy_fortran
-    import mapflpy.fortran as mapflpy_fortran
+    import mapflpy.fortran.mapflpy_fortran as mapflpy_fortran
     tracer = Tracer(mapflpy_fortran, br, bt, bp, lp, **mapfl_params)
     while True:
         try:
@@ -226,6 +243,9 @@ def inter_domain_tracing_caller(br_cor='', bt_cor='', bp_cor='',
     -----
     The function uses two separate processes to avoid sharing `mapflpy_fortran` objects between domains.
     """
+    # check that the mapflpy_fortran module exists
+    check_shared_object()
+
     # setup the pipes
     cor_reciever, cor_sender = mp.Pipe()
     hel_reciever, hel_sender = mp.Pipe()
