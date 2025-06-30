@@ -60,7 +60,7 @@ r = run_command('python3', '-m', 'numpy.f2py', 'src/mapflpy_fortran.f90', '-m', 
 output = r.stdout().strip()
 errortxt = r.stderr().strip()
 
-# This will build the mapflpy*.so file
+# Build the mapflpy*.so file and install it to mapflpy/fortran
 py.extension_module('mapflpy_fortran',
   [
     'src/mapflpy_fortran.f90',
@@ -85,6 +85,7 @@ py.extension_module('mapflpy_fortran',
   install: true,
 )
 
+# install main python files
 py.install_sources([
   'mapflpy/__init__.py',
   'mapflpy/run.py',
@@ -94,9 +95,27 @@ py.install_sources([
   subdir: 'mapflpy'
 )
 
+# install fortran python files
 py.install_sources([
   'mapflpy/fortran/__init__.py',
   ],
   subdir: 'mapflpy/fortran'
 )
+
+# install test python files
+py.install_sources([
+  'mapflpy/tests/__init__.py',
+  'mapflpy/tests/test_tracing.py',
+  ],
+  subdir: 'mapflpy/tests'
+)
+
+# install test data files
+py.install_sources([
+  'mapflpy/tests/data/reference_tracing_dipole.npz',
+  ],
+  subdir: 'mapflpy/tests/data'
+)
+
+
 
