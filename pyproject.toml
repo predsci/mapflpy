@@ -45,13 +45,10 @@ Repository = "https://github.com/predsci/mapflpy"
 hdf4 = [
     "pyhdf",
 ]
-
+test = [
+    "pytest",
+]
 all = ["mapflpy[interp]"]
 
 [tool.setuptools.packages.find]
 exclude = ["src","local_testing","bbdir"]
-
-#[tool.meson-python.args]
-#setup = ['--default-library=static']
-#install = ['--skip-subprojects']
-#dist = ['--allow-dirty']

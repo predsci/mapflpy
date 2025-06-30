@@ -170,6 +170,10 @@ def test_reference_dipole_trace(save_traces=False):
     traces_ = run_tracing_subprocess_caller(file_dict['br'], file_dict['bt'], file_dict['bp'], launch_pts, fwd, bwd)
     trace_list = list([arr[:, ~np.isnan(arr).any(axis=0)] for arr in traces_.traces.T])
 
+    # clean up the B files since they are no longer needed
+    for vec in ['br', 'bt', 'bp']:
+        os.remove(file_dict[vec])
+
     # load the reference tracing (or save a new one if save_traces is True)
     trace_reference_file = os.path.join(ref_data_dir, 'reference_tracing_dipole.npz')
     if save_traces:

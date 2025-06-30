@@ -27,13 +27,13 @@ dependencies:
 
   # Optional Dependencies
   - pyhdf
-  - scipy
 
   # Development Dependencies
   - meson
   - ninja
   - meson-python
   - gfortran
+  - pytest
   - python-build
   - twine
   - pip
