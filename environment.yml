@@ -35,6 +35,7 @@ dependencies:
   - gfortran
   - pytest
   - python-build
+  - delocate
   - twine
   - pip
   - pip:
