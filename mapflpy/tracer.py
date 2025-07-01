@@ -22,6 +22,7 @@ Traces = namedtuple('Traces', ['traces', 'end_pos', 'traced_to_boundary'])
 
 DIRECTION = Literal['f', 'b']
 
+# ToDo: make this buffer size an option that can be changed at runtime!
 DEFAULT_BUFFER_SIZE = 2000
 
 FIELD_DEFAULTS = MappingProxyType({

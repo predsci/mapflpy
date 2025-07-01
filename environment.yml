@@ -1,4 +1,5 @@
-# While mapflpy should be easy to pip install, it requires HDF libraries.
+# mapflpy requires HDF libraries for reading data with psi-io.
+# it also requires the HDF5 library to build the fortran object from source.
 #
 # Generally we recommend installing the python HDF packages using conda.
 # This makes it simpler to ensure that the underlying HDF5 and HDF4 libraries
@@ -37,6 +38,7 @@ dependencies:
   - pytest
   - python-build
   - delocate
+  - auditwheel
   - twine
   - pip
   - pip:
