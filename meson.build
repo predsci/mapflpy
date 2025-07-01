@@ -21,6 +21,23 @@ project('mapflpy',
 # Detect the fortran compiler in the current environment.
 fc = meson.get_compiler('fortran')
 
+# Apply the macOS specific stuff from scipy
+# ------------------------------------------------------------------------------
+# BEGIN SCIPY COPIED CODE
+# ------------------------------------------------------------------------------
+# OBTAINED FROM:
+#   https://github.com/scipy/scipy/blob/8f51c63d384f0e9c966355362f982ea7ec2de1cc/meson.build
+cc = meson.get_compiler('c')
+if host_machine.system() == 'darwin'
+  if cc.has_link_argument('-Wl,-dead_strip')
+    # Allow linker to strip unused symbols
+    add_project_link_arguments('-Wl,-dead_strip', language : ['c', 'fortran'])
+  endif
+endif
+# ------------------------------------------------------------------------------
+# END SCIPY COPIED CODE
+# ------------------------------------------------------------------------------
+
 # Detect the python installation in the current environment.
 py = import('python').find_installation(pure: false)
 py_dep = py.dependency()

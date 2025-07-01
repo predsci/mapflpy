@@ -38,6 +38,9 @@ def check_shared_object(verbose=False):
             if key.startswith('mapflpy'):
                 print(sys.modules[key])
 
+    # return the absolute path to the shared object file
+    return module_spec.origin
+
 
 def save_trace_info(filename, traces, index={}, dtype=np.float32):
     """

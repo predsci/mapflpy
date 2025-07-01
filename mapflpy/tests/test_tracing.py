@@ -119,7 +119,9 @@ def cvtosv(vx, vy, vz, t, p):
 # Test Execution
 # -----------------------------------------------------------------------------
 def test_shared_object():
-    check_shared_object()
+    location = check_shared_object()
+    print(f'### mapflpy_fortran shared object location:'
+          f'\n  {location}')
 
 
 def test_reference_dipole_trace(save_traces=False):
@@ -171,6 +173,7 @@ def test_reference_dipole_trace(save_traces=False):
     trace_list = list([arr[:, ~np.isnan(arr).any(axis=0)] for arr in traces_.traces.T])
 
     # clean up the B files since they are no longer needed
+    print(f'### Cleaning B data')
     for vec in ['br', 'bt', 'bp']:
         os.remove(file_dict[vec])
 
@@ -195,16 +198,24 @@ def test_reference_dipole_trace(save_traces=False):
         if npts != npts_ref:
             raise Exception(f'  trace {i} has a different length! Expected {npts_ref} but got {npts}!')
 
-        # check the relative tolerance of the endpoints
-        rtol = 1e-12
-        for idir in [0, 1, 2]:
-            isclose = np.isclose(trace[idir, -1], trace_ref[idir, -1], rtol=rtol)
-            assert isclose == True
-            if not isclose:
-                raise Exception(f'\n  ERROR! trace {i} endpoint is not within {rtol:.1e} of reference endpoint!'
-                                f'\n       trace[:,-1]: {trace[:, -1]},     trace.shape: {trace.shape}'
-                                f'\n   trace_ref[:,-1]: {trace_ref[:, -1]}, trace_ref.shape: {trace.shape}'
-                                f'\n   difference: {trace[:, -1] - trace_ref[:, -1]}')
+        # convert to cartesian for testing proximity of each trace point to the reference trace points
+        trace_xyz = np.array(s2c(trace[0,:], trace[1,:], trace[2,:]))
+        trace_ref_xyz = np.array(s2c(trace_ref[0,:], trace_ref[1,:], trace_ref[2,:]))
 
-        # summarize the difference
-        print(f'maxdiff: {np.max(trace - trace_ref):.7e}, ')
+        # get the max difference of all points in any of the component directions for diagnostic purposes
+        maxdiff = np.max(np.abs(trace_xyz - trace_ref_xyz))
+        print(f'maxdiff: {maxdiff:.7e}')
+
+        # make sure these are within a reasonable relative tolerance for double precision
+        # (since some points might be very close to zero we have to be careful about just a relative check)
+        rtol = 1e-12
+        atol = 1e-12
+        assert np.all(np.isclose(trace_xyz, trace_ref_xyz, rtol=rtol, atol=atol)), \
+            (f"Not all trace points are within acceptable tolerance of the reference trace!\n"
+             f"  rel_tol: {rtol:.2e}, abs_tol: {atol:.2e}")
+
+
+
+if __name__ == '__main__':
+    test_shared_object()
+    test_reference_dipole_trace()

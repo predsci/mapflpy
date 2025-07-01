@@ -10,6 +10,7 @@ mapflpy_fortranmodule.c
 
 # Local testing
 local_testing/
+tmp*/
 
 # Node artifact files
 node_modules/
