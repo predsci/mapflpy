@@ -28,6 +28,7 @@ dependencies:
 
   # Optional Dependencies
   - pyhdf
+  - scipy
 
   # Development Dependencies
   - meson~=1.8.0
