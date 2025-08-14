@@ -1,0 +1,56 @@
+{
+  "mesh": {
+    "base": {
+      "lon": 180.0,
+      "lat": 45.0,
+      "r0": 1.0,
+      "r1": 10.0,
+      "r_resolution": 71,
+      "t_resolution": 91,
+      "p_resolution": 181
+    },
+    "params": {
+      "coarse": {
+        "resfac": 0.5
+      },
+      "normal": {
+        "resfac": 1.0
+      },
+      "fine": {
+        "resfac": 2.0
+      }
+    }
+  },
+  "_domains": {
+    "cor": {
+      "r0": 1.0,
+      "r1": 4.0
+    },
+    "hel": {
+      "r0": 4.0,
+      "r1": 10.0
+    },
+    "combined": {
+      "r0": 1.0,
+      "r1": 10.0
+    }
+  },
+  "lps": {
+    "base": {
+      "t_values": [0.26179939, 1.13446401, 2.00712864, 2.87979327],
+      "p_values": [0         , 1.57079633, 3.14159265, 4.71238898]
+    },
+    "params": {
+      "fwd": {
+        "r_values": 1.01
+      },
+      "bwd": {
+        "r_values": 9.99
+      },
+      "both": {
+          "r_values": 4.50
+      }
+    },
+    "BUFFER": 1000
+  }
+}
