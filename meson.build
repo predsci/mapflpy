@@ -10,7 +10,7 @@
 project('mapflpy',
   ['c', 'fortran'],
   license: 'Apache-2.0',
-  version : '0.9.0',
+  version : '1.0.0',
   meson_version: '>= 1.1.0',
   default_options : [
     'warning_level=1',
@@ -105,7 +105,8 @@ py.extension_module('mapflpy_fortran',
 # install main python files
 py.install_sources([
   'mapflpy/__init__.py',
-  'mapflpy/run.py',
+  'mapflpy/_typing.py',
+  'mapflpy/scripts.py',
   'mapflpy/tracer.py',
   'mapflpy/utils.py',
   ],
@@ -122,14 +123,25 @@ py.install_sources([
 # install test python files
 py.install_sources([
   'mapflpy/tests/__init__.py',
-  'mapflpy/tests/test_tracing.py',
+  'mapflpy/tests/conftest.py',
+  'mapflpy/tests/test_module.py',
+  'mapflpy/tests/utils.py',
+  'mapflpy/tests/test_tracer/test_class_primitives.py',
+  'mapflpy/tests/test_tracer/test_fortran_calls.py',
+  'mapflpy/tests/test_tracer/test_param_editing.py',
+  'mapflpy/tests/test_tracer/test_trace_routines.py',
+  'mapflpy/tests/test_tracermp/test_class_primitives_.py',
+  'mapflpy/tests/test_tracermp/test_fortran_calls_.py',
+  'mapflpy/tests/test_tracermp/test_param_editing_.py',
+  'mapflpy/tests/test_tracermp/test_trace_routines_.py',
   ],
   subdir: 'mapflpy/tests'
 )
 
 # install test data files
 py.install_sources([
-  'mapflpy/tests/data/reference_tracing_dipole.npz',
+  'mapflpy/tests/data/defaults.json',
+  'mapflpy/tests/data/reference_traces.npz',
   ],
   subdir: 'mapflpy/tests/data'
 )
