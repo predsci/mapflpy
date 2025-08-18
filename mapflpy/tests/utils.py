@@ -314,3 +314,27 @@ def compute_fieldline_length(trace: NDArray[float]) -> float:
     seg_lengths = np.linalg.norm(spline_difference, axis=0)  # (N-1,)
     length = seg_lengths.sum()
     return length
+
+
+def compute_weighted_fieldline_difference(trace_test: NDArray[float],
+                                          trace_ref: NDArray[float]) -> NDArray[float]:
+    """Compute the weighted difference between two field line traces.
+
+    Parameters
+    ----------
+    trace_test: ndarray
+        2D numpy array of shape (3, N) representing the first field line trace in spherical coordinates.
+    trace_ref: ndarray
+        2D numpy array of shape (3, N) representing the second field line trace in spherical coordinates.
+
+    Returns
+    -------
+    weighted_difference: ndarray
+        Weighted difference between the two field line traces.
+    """
+    # Convert spherical to Cartesian coordinates for distance calculation
+    cartesian_trace_test = np.asarray(s2c(*trace_test))
+    cartesian_trace_ref = np.asarray(s2c(*trace_ref))
+
+    distances = np.linalg.norm(cartesian_trace_test - cartesian_trace_ref, axis=0)  # (N,)
+    return distances / trace_ref[0, ...]

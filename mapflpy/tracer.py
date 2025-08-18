@@ -58,7 +58,7 @@ from mapflpy._typing import (
     MagneticFieldLabelType,
     ArrayType,
     Traces)
-from mapflpy.utils import fetch_default_launch_points
+from mapflpy.utils import fetch_default_launch_points, combine_fwd_bwd_traces
 
 _BS0 = np.zeros(3, order='F').astype(np.float64)
 _BS1 = np.zeros(3, order='F').astype(np.float64)
@@ -682,9 +682,53 @@ class _Tracer(MutableMapping, ABC):
         lps = self._parse_launch_points(launch_points, **kwargs)
         return self._trace(lps, buffer_size)
 
+    def trace_fwd(self, *args, **kwargs):
+        """
+        Perform forward fieldline tracing from launch points.
+
+        This is a convenience method equivalent to calling `set_tracing_direction('f')`
+        before invoking `trace()`.
+
+        See Also
+        --------
+        See `trace()` for parameter details and complete documentation.
+        """
+        self.set_tracing_direction('f')
+        return self.trace(*args, **kwargs)
+
+    def trace_bwd(self, *args, **kwargs):
+        """
+        Perform backward fieldline tracing from launch points.
+
+        This is a convenience method equivalent to calling `set_tracing_direction('b')`
+        before invoking `trace()`.
+
+        See Also
+        --------
+        See `trace()` for parameter details and complete documentation.
+        """
+        self.set_tracing_direction('b')
+        return self.trace(*args, **kwargs)
+
+    def trace_fbwd(self, *args, **kwargs):
+        """
+        Perform fieldline tracing in both forward and backward directions.
+
+        This is a convenience method equivalent to calling `trace_fwd()` and `trace_bwd()`
+        sequentially, combining the results into a single `Traces` object.
+
+        See Also
+        --------
+        See `trace()` for parameter details and complete documentation.
+        """
+        fwd_traces = self.trace_fwd(*args, **kwargs)
+        bwd_traces = self.trace_bwd(*args, **kwargs)
+        return combine_fwd_bwd_traces(fwd_traces, bwd_traces)
+
     # ---------------------------------
     # mapflpy_fortran interface methods
     # ---------------------------------
+
     @abstractmethod
     def _mapfl_id(self) -> int:
         """Return the memory ID of the Fortran interface (for process isolation validation)."""

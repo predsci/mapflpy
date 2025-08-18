@@ -16,14 +16,40 @@ from mapflpy.utils import shift_phi_traces, shift_phi_lps, fetch_default_launch_
 def run_foward_tracing(br: PathType,
                        bt: PathType,
                        bp: PathType,
-                       launch_points: Optional[Iterable[float]] =None,
-                       buffer_size: int =DEFAULT_BUFFER_SIZE,
+                       launch_points: Optional[Iterable[float]] = None,
+                       buffer_size: int = DEFAULT_BUFFER_SIZE,
                        **mapfl_params
                        ) -> Traces:
+    """
+    Run forward tracing using TracerMP.
+
+    This function initializes a `TracerMP` instance and calls the `trace_fwd` method to perform forward tracing
+    from the specified launch points. The launch points can be provided as an iterable of floats or None to use
+    default launch points. The buffer size can be adjusted to control the number of points in the trace geometry.
+
+    Parameters
+    ----------
+    br : PathType
+        Path to hdf4 or hdf5 Br file.
+    bt : PathType
+        Path to hdf4 or hdf5 Bt file.
+    bp : PathType
+        Path to hdf4 or hdf5 Bp file.
+    launch_points : Optional[Iterable[float]]
+        Launch points used by the tracer. If None, default launch points will be used.
+    buffer_size : int
+        Buffer size for trace geometry. Default is 2000.
+    mapfl_params : dict
+        Additional keyword arguments to be passed to the `TracerMP` initialization.
+
+    Returns
+    -------
+    Traces
+        A `Traces` object containing the results of the forward tracing.
+
+    """
     with TracerMP(br, bt, bp, **mapfl_params) as tracer:
-        tracer.set_tracing_direction('f')
-        traces = tracer.trace(launch_points, buffer_size)
-        return traces
+        return tracer.trace_fwd(launch_points, buffer_size)
 
 
 def run_backward_tracing(br: PathType,
@@ -33,10 +59,36 @@ def run_backward_tracing(br: PathType,
                          buffer_size: int = DEFAULT_BUFFER_SIZE,
                          **mapfl_params
                          ) -> Traces:
+    """
+    Run backward tracing using TracerMP.
+
+    This function initializes a `TracerMP` instance and calls the `trace_bwd` method to perform forward tracing
+    from the specified launch points. The launch points can be provided as an iterable of floats or None to use
+    default launch points. The buffer size can be adjusted to control the number of points in the trace geometry.
+
+    Parameters
+    ----------
+    br : PathType
+        Path to hdf4 or hdf5 Br file.
+    bt : PathType
+        Path to hdf4 or hdf5 Bt file.
+    bp : PathType
+        Path to hdf4 or hdf5 Bp file.
+    launch_points : Optional[Iterable[float]]
+        Launch points used by the tracer. If None, default launch points will be used.
+    buffer_size : int
+        Buffer size for trace geometry. Default is 2000.
+    mapfl_params : dict
+        Additional keyword arguments to be passed to the `TracerMP` initialization.
+
+    Returns
+    -------
+    Traces
+        A `Traces` object containing the results of the backward tracing.
+
+    """
     with TracerMP(br, bt, bp, **mapfl_params) as tracer:
-        tracer.set_tracing_direction('b')
-        traces = tracer.trace(launch_points, buffer_size)
-        return traces
+        return tracer.trace_bwd(launch_points, buffer_size)
 
 
 def run_fwdbwd_tracing(br: PathType,
@@ -46,13 +98,37 @@ def run_fwdbwd_tracing(br: PathType,
                        buffer_size: int = DEFAULT_BUFFER_SIZE,
                        **mapfl_params
                        ) -> Traces:
+    """
+    Run forward and backward tracing using TracerMP.
+
+    This function initializes a `TracerMP` instance and calls the `trace_fbwd` method to perform forward tracing
+    and backward tracing from the specified launch points. The launch points can be provided as an iterable of
+    floats or None to use default launch points. The buffer size can be adjusted to control the number of points
+    in the trace geometry. The traces are combined into a single `Traces` object.
+
+    Parameters
+    ----------
+    br : PathType
+        Path to hdf4 or hdf5 Br file.
+    bt : PathType
+        Path to hdf4 or hdf5 Bt file.
+    bp : PathType
+        Path to hdf4 or hdf5 Bp file.
+    launch_points : Optional[Iterable[float]]
+        Launch points used by the tracer. If None, default launch points will be used.
+    buffer_size : int
+        Buffer size for trace geometry. Default is 2000.
+    mapfl_params : dict
+        Additional keyword arguments to be passed to the `TracerMP` initialization.
+
+    Returns
+    -------
+    Traces
+        A `Traces` object containing the results of the forward tracing.
+
+    """
     with TracerMP(br, bt, bp, **mapfl_params) as tracer:
-        tracer.set_tracing_direction('f')
-        fwd_traces = tracer.trace(launch_points, buffer_size)
-        tracer.set_tracing_direction('b')
-        bwd_traces = tracer.trace(launch_points, buffer_size)
-        combined_traces = combine_fwd_bwd_traces(fwd_traces, bwd_traces)
-        return combined_traces
+        return tracer.trace_fbwd(launch_points, buffer_size)
 
 
 def inter_domain_tracing(br_cor: PathType,
