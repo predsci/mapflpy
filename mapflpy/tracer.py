@@ -1116,8 +1116,3 @@ class TracerMP(_Tracer):
         Return handling and error checking is done in the `check_process_state` decorator.
         """
         self._parent.send(("trace", lps, buff))
-
-if __name__ == "__main__":
-    with TracerMP() as tracer_mp:
-        x = tracer_mp.run()
-        print(x)

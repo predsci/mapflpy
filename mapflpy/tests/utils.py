@@ -338,3 +338,10 @@ def compute_weighted_fieldline_difference(trace_test: NDArray[float],
 
     distances = np.linalg.norm(cartesian_trace_test - cartesian_trace_ref, axis=0)  # (N,)
     return distances / trace_ref[0, ...]
+
+
+if __name__ == "__main__":
+    # If this script is run directly, generate the reference traces
+    print("Generating reference traces...")
+    generate_reference_traces()
+    print("Reference traces generated successfully.")

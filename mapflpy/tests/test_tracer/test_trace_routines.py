@@ -1,6 +1,7 @@
 import pytest
 from numpy.testing import assert_allclose
 
+from mapflpy.tests.utils import compute_weighted_fieldline_difference
 from mapflpy.utils import trim_fieldline_nan_buffer, combine_fwd_bwd_traces
 
 
@@ -30,4 +31,5 @@ def test_tracing_against_reference_traces(tracer_instance, mesh_fields_asarray, 
 
     traces_trimmed = trim_fieldline_nan_buffer(traces)
     for i, arr in enumerate(traces_trimmed):
-        assert_allclose(arr, reference_traces[f'{mesh_id}_{lps_id}_{i}'])
+        wdist = compute_weighted_fieldline_difference(arr, reference_traces[f'{mesh_id}_{lps_id}_{i}'])
+        assert_allclose(wdist, 0, rtol=default_lps_params['rtol_exact'])

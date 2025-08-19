@@ -51,6 +51,8 @@
           "r_values": 4.50
       }
     },
-    "BUFFER": 1000
+    "BUFFER": 1000,
+    "rtol_exact": 1e-7,
+    "rtol_fuzzy": 1e-3
   }
 }

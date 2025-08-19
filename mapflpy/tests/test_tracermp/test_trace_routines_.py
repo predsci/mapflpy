@@ -2,7 +2,7 @@ import pytest
 from numpy.testing import assert_allclose
 
 from mapflpy.scripts import run_foward_tracing, run_backward_tracing, run_fwdbwd_tracing, inter_domain_tracing
-from mapflpy.tests.utils import compute_fieldline_length
+from mapflpy.tests.utils import compute_fieldline_length, compute_weighted_fieldline_difference
 from mapflpy.utils import trim_fieldline_nan_buffer, combine_fwd_bwd_traces
 
 
@@ -32,7 +32,8 @@ def test_tracing_against_reference_traces(tracermp_instance, mesh_fields_aspaths
 
     traces_trimmed = trim_fieldline_nan_buffer(traces)
     for i, arr in enumerate(traces_trimmed):
-        assert_allclose(arr, reference_traces[f'{mesh_id}_{lps_id}_{i}'])
+        wdist = compute_weighted_fieldline_difference(arr, reference_traces[f'{mesh_id}_{lps_id}_{i}'])
+        assert_allclose(wdist, 0, rtol=default_lps_params['rtol_exact'])
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
@@ -52,7 +53,8 @@ def test_tracing_scripts_against_reference_traces(mesh_fields_aspaths, launch_po
 
     traces_trimmed = trim_fieldline_nan_buffer(traces)
     for i, arr in enumerate(traces_trimmed):
-        assert_allclose(arr, reference_traces[f'{mesh_id}_{lps_id}_{i}'])
+        wdist = compute_weighted_fieldline_difference(arr, reference_traces[f'{mesh_id}_{lps_id}_{i}'])
+        assert_allclose(wdist, 0, rtol=default_lps_params['rtol_exact'])
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
@@ -80,4 +82,4 @@ def test_interdomain_tracing_against_reference_traces(interdomain_files, launch_
         len_test = compute_fieldline_length(arr)
         len_ref = compute_fieldline_length(reference_traces[f'{mesh_id}_{lps_id}_{i}'])
         assert_allclose(arr[:, [0, -1]], reference_traces[f'{mesh_id}_{lps_id}_{i}'][:, [0, -1]], atol=1e-3)
-        assert_allclose(len_test, len_ref, atol=1e-3)
+        assert_allclose(len_test, len_ref, rtol=default_params['lps']['rtol_fuzzy'])
