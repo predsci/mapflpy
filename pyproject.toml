@@ -12,9 +12,10 @@ name = "mapflpy"
 description = "Python extension for tracing field lines using the Fortran tracer from MapFL"
 authors = [
   {name = "Predictive Science Inc.", email = "webmaster@predsci.com"},
-  {name = "Ronald M. Caplan"},
   {name = "Ryder Davidson"},
   {name = "Cooper Downs"},
+  {name = "Andres Reyes"},
+  {name = "Asher Pembroke"},
 ]
 version = "1.0.0"
 readme = "README.md"

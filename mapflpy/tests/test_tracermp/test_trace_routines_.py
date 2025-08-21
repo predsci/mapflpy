@@ -33,7 +33,7 @@ def test_tracing_against_reference_traces(tracermp_instance, mesh_fields_aspaths
     traces_trimmed = trim_fieldline_nan_buffer(traces)
     for i, arr in enumerate(traces_trimmed):
         wdist = compute_weighted_fieldline_difference(arr, reference_traces[f'{mesh_id}_{lps_id}_{i}'])
-        assert_allclose(wdist, 0, rtol=default_lps_params['rtol_exact'])
+        assert_allclose(wdist, 0, atol=default_lps_params['atol_exact'])
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
@@ -54,11 +54,17 @@ def test_tracing_scripts_against_reference_traces(mesh_fields_aspaths, launch_po
     traces_trimmed = trim_fieldline_nan_buffer(traces)
     for i, arr in enumerate(traces_trimmed):
         wdist = compute_weighted_fieldline_difference(arr, reference_traces[f'{mesh_id}_{lps_id}_{i}'])
-        assert_allclose(wdist, 0, rtol=default_lps_params['rtol_exact'])
-
+        assert_allclose(wdist, 0, atol=default_lps_params['atol_exact'])
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_interdomain_tracing_against_reference_traces(interdomain_files, launch_points, default_params, reference_traces):
+    """
+    This test compares an interdomain trace where the domain has been split at r_interface to the reference traces
+    where there was no split-domain. These traces can differ more because exactly where the interface lies along
+    a reference field line segment can vary, which is effectively like seeding a part (or parts) of the trace
+    with a slightly different start location. This means the traces *will not* be the same length and we must
+    use the fuzzy tolerances because the errors are related to the mesh and discretization of B (not the tracer itself).
+    """
     mesh_id, (br_cor, bt_cor, bp_cor, br_hel, bt_hel, bp_hel) = interdomain_files
     lps_id, lps = launch_points
     buffer = default_params['lps']['BUFFER']
@@ -79,7 +85,10 @@ def test_interdomain_tracing_against_reference_traces(interdomain_files, launch_
                                           r_interface=r_interface,
                                           buffer_size=buffer)
     for i, arr in enumerate(traces):
+        # compare the distance of the first and last points (footprints)
+        wdist = compute_weighted_fieldline_difference(arr[:, [0, -1]], reference_traces[f'{mesh_id}_{lps_id}_{i}'][:, [0, -1]])
+        assert_allclose(wdist, 0, atol=default_params['lps']['atol_fuzzy'])
+        # compare the lengths of the traces
         len_test = compute_fieldline_length(arr)
         len_ref = compute_fieldline_length(reference_traces[f'{mesh_id}_{lps_id}_{i}'])
-        assert_allclose(arr[:, [0, -1]], reference_traces[f'{mesh_id}_{lps_id}_{i}'][:, [0, -1]], atol=1e-3)
         assert_allclose(len_test, len_ref, rtol=default_params['lps']['rtol_fuzzy'])

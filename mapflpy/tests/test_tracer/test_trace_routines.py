@@ -32,4 +32,4 @@ def test_tracing_against_reference_traces(tracer_instance, mesh_fields_asarray, 
     traces_trimmed = trim_fieldline_nan_buffer(traces)
     for i, arr in enumerate(traces_trimmed):
         wdist = compute_weighted_fieldline_difference(arr, reference_traces[f'{mesh_id}_{lps_id}_{i}'])
-        assert_allclose(wdist, 0, rtol=default_lps_params['rtol_exact'])
+        assert_allclose(wdist, 0, atol=default_lps_params['atol_exact'])

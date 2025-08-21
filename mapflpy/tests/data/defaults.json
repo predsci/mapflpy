@@ -52,6 +52,8 @@
       }
     },
     "BUFFER": 1000,
+    "atol_exact": 1e-10,
+    "atol_fuzzy": 1e-3,
     "rtol_exact": 1e-7,
     "rtol_fuzzy": 1e-3
   }
