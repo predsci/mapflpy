@@ -530,24 +530,35 @@ subroutine run (debug_level_, &
       if (integrate_along_fl) call set_up_integration
 
 ! ! c
-! ! c ****** Trace the field lines forward, if requested.
+! ! c ****** Trace the field lines forward, set dir and/or map if requested.
 ! ! c
-
       if (trace_fwd) then
-        if (verbose.gt.0) then
-          print*, "tracing forward"
-        endif 
-        call map_forward
-      else
-        if (verbose.gt.0) then
-          print*, "not tracing forward"
+        ds%direction=1
+        if (rffile.ne.' '.or. &
+            tffile.ne.' '.or. &
+            pffile.ne.' '.or. &
+            effile.ne.' '.or. &
+            kffile.ne.' '.or. &
+            qffile.ne.' '.or. &
+            lffile.ne.' ') then
+          call map_forward
         endif
       endif
-
 ! c
-! c ****** Trace the field lines backward, if requested.
+! c ****** Trace the field lines backward, set dir and/or map if requested.
 ! c
-      if (trace_bwd) call map_backward
+      if (trace_bwd) then
+        ds%direction=-1
+        if (rbfile.ne.' '.or. &
+            tbfile.ne.' '.or. &
+            pbfile.ne.' '.or. &
+            ebfile.ne.' '.or. &
+            kbfile.ne.' '.or. &
+            qbfile.ne.' '.or. &
+            lbfile.ne.' ') then
+          call map_backward
+        endif
+      endif
 ! c
 ! c ****** Map the field lines from a 3D rectilinear volume,
 ! c ****** if requested.
@@ -700,6 +711,7 @@ subroutine trace (s0, s1, bs0, bs1, s, traced_to_r_boundary, svec, svec_n)
   use number_types
   use field
   use params
+  use debug
 
   implicit none
   real(r_typ), dimension(3), intent(in) :: s0
@@ -710,7 +722,6 @@ subroutine trace (s0, s1, bs0, bs1, s, traced_to_r_boundary, svec, svec_n)
   logical, intent(inout) :: traced_to_r_boundary
   type(traj) :: xt
   integer :: stride, step_i, svec_step, j, last_step
-  logical, parameter :: debug_trace=.false.
 
   call allocate_trajectory_buffer (xt)
 
@@ -720,7 +731,8 @@ subroutine trace (s0, s1, bs0, bs1, s, traced_to_r_boundary, svec, svec_n)
     write (*,*) 'cubic:', cubic
     write (*,*) 'b limit 1:', b%lim1(1)
     write (*,*) 'ds variable:', ds%variable
-
+    write (*,*) 'ds%direction:', ds%direction
+    write (*,*) 'ds%direction_is_along_b:', ds%direction_is_along_b
     write (*,*) 'size of input svec', size(svec,1)
   end if
 
@@ -786,15 +798,24 @@ subroutine trace (s0, s1, bs0, bs1, s, traced_to_r_boundary, svec, svec_n)
   end if
 
   ! extra debugging that can be added for pyvisual.
-  if (debug_trace) then
+  if (debug_level.ge.2) then
     write (*,*) '*************************************'
-    write (*,*) '  npts: ', xt%npts, '  stride: ', stride
+    write (*,*) '  xt npts: ', xt%npts, '  stride: ', stride
+    write (*,*) '  buffer size: ', size(svec, 1)
+    write (*,*) '  last_step (xt): ', last_step
+    write (*,*) '  svec npts: ', svec_step-1
+    write (*,*) '  s0:         ', s0(1), s0(2), s0(3)
     write (*,*) '  first xt:   ', xt%x(1)%f(1),xt%x(2)%f(1),xt%x(3)%f(1)
     write (*,*) '  first svec: ', svec(1, :)
-    write (*,*) '  2nd xt:   ', xt%x(1)%f(2),xt%x(2)%f(2),xt%x(3)%f(2)
-    write (*,*) '  2nd svec: ', svec(2, :)
-    write (*,*) '  last xt:   ', xt%x(1)%f(xt%npts),xt%x(2)%f(xt%npts),xt%x(3)%f(xt%npts)
-    write (*,*) '  last svec: ', svec(svec_step-1, :)
+    if (xt%npts.gt.1) then
+      write (*,*) '  2nd xt:     ', xt%x(1)%f(2),xt%x(2)%f(2),xt%x(3)%f(2)
+      write (*,*) '  2nd svec:   ', svec(2, :)
+      write (*,*) '  xt[n-1]:    ', xt%x(1)%f(xt%npts-1),xt%x(2)%f(xt%npts-1),xt%x(3)%f(xt%npts-1)
+      write (*,*) '  svec[n-1]:  ', svec(svec_step-2, :)
+    endif
+    write (*,*) '  last xt:    ', xt%x(1)%f(xt%npts),xt%x(2)%f(xt%npts),xt%x(3)%f(xt%npts)
+    write (*,*) '  last svec:  ', svec(svec_step-1, :)
+    write (*,*) '  s1:         ', s1(1), s1(2), s1(3)
     write (*,*) '  traced_to_r_boundary:', traced_to_r_boundary
     write (*,*) '*************************************'
   endif

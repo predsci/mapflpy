@@ -5884,7 +5884,7 @@ c
       real(r_typ) :: ds0,dss,dsss,frac,dsmult_corrector
       real(r_typ) :: sf=1._r_typ,sf1,sf2
       logical :: done_tracing,first,nullb
-      integer :: idir0,n,ntry,max_n,max_ntry
+      integer :: idir0,n,ntry,max_n,max_ntry,n_xt,i
       type (csvec) :: x,xp,xo,bv,bhat1,bhat2
       type (inout) :: outside
       integer :: ierr
@@ -6176,6 +6176,7 @@ c
                    sf=half*(sf1+sf2)
                 endif
                 s=s+abs(dsss)*sf
+                if (store_trace) call add_trajectory_point (xt,x%s)
                 exit
 c
               end if
@@ -6378,6 +6379,17 @@ c
      &                   ds%short_fl_shrink_factor
           current_ds%max=current_ds%max*
      &                   ds%short_fl_shrink_factor
+c
+c ****** Reset the trace buffer
+c
+          if (store_trace.and.(.not.(ntry.ge.max_ntry))) then
+            do n_xt=1,xt%npts
+              do i=1,xt%ndim
+                xt%x(i)%f(n_xt)=0.0
+              enddo
+            enddo
+            xt%npts=0
+          endif
 c
         else
           exit !Break out of max_ntry loop if line had enough points.
