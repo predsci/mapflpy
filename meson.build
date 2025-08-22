@@ -10,7 +10,7 @@
 project('mapflpy',
   ['c', 'fortran'],
   license: 'Apache-2.0',
-  version : '1.0.0',
+  version : '1.0.1',
   meson_version: '>= 1.1.0',
   default_options : [
     'warning_level=1',
