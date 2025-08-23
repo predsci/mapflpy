@@ -105,8 +105,8 @@ def interdomain_files(tmp_path_factory, default_params, dipole_field_factory, re
         **default_params["mesh"]["base"],
         **default_params["mesh"]["params"][level]
     }
-    cor_params = {**base_params, **default_params["_domains"]["cor"]}
-    hel_params = {**base_params, **default_params["_domains"]["hel"]}
+    cor_params = {**base_params, **default_params["_testing"]["domain_ranges"]["cor"]}
+    hel_params = {**base_params, **default_params["_testing"]["domain_ranges"]["hel"]}
     
     br_cor, bt_cor, bp_cor, r_cor, t_cor, p_cor = dipole_field_factory(**cor_params)
     br_hel, bt_hel, bp_hel, r_hel, t_hel, p_hel = dipole_field_factory(**hel_params)

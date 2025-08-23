@@ -15,8 +15,9 @@ def test_reference_tracers_meta(reference_traces, default_params):
     tracer_metadata = json.loads(reference_traces["__meta__"].item())
     tracer_defaults = tracer_metadata["defaults"]
     for key, value in default_params.items():
-        if isinstance(value, dict):
-            for subkey, subvalue in value.items():
-                assert tracer_defaults[key][subkey] == subvalue
-        else:
-            assert tracer_defaults[key] == value
+        if key != '_testing':
+            if isinstance(value, dict):
+                for subkey, subvalue in value.items():
+                    assert tracer_defaults[key][subkey] == subvalue
+            else:
+                assert tracer_defaults[key] == value

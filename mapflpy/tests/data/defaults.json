@@ -21,20 +21,7 @@
       }
     }
   },
-  "_domains": {
-    "cor": {
-      "r0": 1.0,
-      "r1": 4.0
-    },
-    "hel": {
-      "r0": 4.0,
-      "r1": 10.0
-    },
-    "combined": {
-      "r0": 1.0,
-      "r1": 10.0
-    }
-  },
+
   "lps": {
     "base": {
       "t_values": [0.26179939, 1.13446401, 2.00712864, 2.87979327],
@@ -51,10 +38,29 @@
           "r_values": 4.50
       }
     },
-    "BUFFER": 1000,
-    "atol_exact": 1e-10,
-    "atol_fuzzy": 1e-3,
-    "rtol_exact": 1e-7,
-    "rtol_fuzzy": 1e-3
+    "BUFFER": 1000
+  },
+
+  "_testing": {
+    "domain_ranges": {
+      "cor": {
+        "r0": 1.0,
+        "r1": 4.0
+      },
+      "hel": {
+        "r0": 4.0,
+        "r1": 10.0
+      },
+      "combined": {
+        "r0": 1.0,
+        "r1": 10.0
+      }
+    },
+    "tolerances": {
+      "atol_exact": 1e-10,
+      "atol_fuzzy": 1e-5,
+      "rtol_exact": 1e-7,
+      "rtol_fuzzy": 1e-5
+    }
   }
 }
