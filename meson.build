@@ -29,7 +29,7 @@ except ModuleNotFoundError:
     import tomli as tomllib    # pip install tomli for Py < 3.11
 data = tomllib.loads(text)
 print(data["project"]["version"])
-''',
+      ''',
       meson.project_source_root() / 'pyproject.toml',
     ],
     check: true
