@@ -5,10 +5,12 @@ requires = [
   "h5py",
   "meson-python",
   "meson",
+  "tomli",
 ]
 
 [project]
 name = "mapflpy"
+version = "1.0.2"
 description = "Python extension for tracing field lines using the Fortran tracer from MapFL"
 authors = [
   {name = "Predictive Science Inc.", email = "webmaster@predsci.com"},
@@ -17,7 +19,6 @@ authors = [
   {name = "Andres Reyes"},
   {name = "Asher Pembroke"},
 ]
-version = "1.0.1"
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE.txt"]
@@ -50,7 +51,13 @@ hdf4 = [
 test = [
     "pytest",
 ]
-all = ["mapflpy[interp]"]
+docs = [
+  "sphinx",
+  "sphinx-autodoc-typehints",
+  "sphinx-book-theme",
+  "sphinx-gallery"
+]
+dev = ["mapflpy[hdf4,test,docs]"]
 
 [tool.setuptools.packages.find]
 exclude = ["src","local_testing","bbdir"]

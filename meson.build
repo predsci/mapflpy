@@ -7,15 +7,33 @@
 # - The rest is adapted from the meson-python instructions for building packages.
 #
 # -----------------------------------------------------------------------------
+
 project('mapflpy',
   ['c', 'fortran'],
   license: 'Apache-2.0',
-  version : '1.0.1',
   meson_version: '>= 1.1.0',
   default_options : [
     'warning_level=1',
     'buildtype=release',
-  ]
+  ],
+  version: run_command(
+    find_program('python3', required: true),
+    [
+      '-c',
+      '''
+import sys, pathlib
+text = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")
+try:
+    import tomllib             # Py >= 3.11
+except ModuleNotFoundError:
+    import tomli as tomllib    # pip install tomli for Py < 3.11
+data = tomllib.loads(text)
+print(data["project"]["version"])
+''',
+      meson.project_source_root() / 'pyproject.toml',
+    ],
+    check: true
+  ).stdout().strip()
 )
 
 # Detect the fortran compiler in the current environment.
