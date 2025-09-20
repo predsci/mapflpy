@@ -132,6 +132,6 @@ Icon?
 *.hdf
 *.hdf5
 *.png
-!docs/source/_static/assets/*.h5
-!docs/source/_static/assets/*.hdf
-!docs/source/_static/assets/*.hdf5
+#!docs/source/_static/assets/*.h5
+#!docs/source/_static/assets/*.hdf
+#!docs/source/_static/assets/*.hdf5
