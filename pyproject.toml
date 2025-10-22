@@ -59,7 +59,4 @@ docs = [
 dev = ["mapflpy[hdf4,test,docs]"]
 
 [tool.setuptools.packages.find]
-exclude = ["src","local_testing","bbdir"]
-
-[tool.meson-python.sdist]
-include = ["tests/**", "README.*", "LICENSE*"]
+exclude = ["src","tests", "docs"]
