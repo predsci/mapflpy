@@ -1,12 +1,13 @@
 mapflpy Documentation
-====================
+=====================
 
 A short paragraph explaining what your package does.
 
 .. toctree::
-   :maxdepth: 2
-   :hidden:
+    :hidden:
 
-    Guide <guide/index>
-    Examples <examples/index>
     API <api/index>
+    Guide <guide/index>
+    Examples <gallery/index>
+
+

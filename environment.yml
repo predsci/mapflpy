@@ -33,7 +33,8 @@ dependencies:
   # Documentation Dependencies
   - sphinx
   - sphinx-book-theme
-  - myst-parser
+  - sphinx-toolbox
+  - sphinx-gallery
   - matplotlib
 
   # Development Dependencies

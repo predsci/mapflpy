@@ -29,4 +29,4 @@ def test_initial_state(tracermp_instance, defaults):
     assert tracermp_instance._stale is True
     assert dict(tracermp_instance._mapfl_params) == dict(DEFAULT_PARAMS)
     assert tracermp_instance._magnetic_fields == MAGNETIC_FIELD_PATHS
-    assert float(tracermp_instance._timeout) == pytest.approx(10.0)
+    assert float(tracermp_instance._timeout) == pytest.approx(30.0)

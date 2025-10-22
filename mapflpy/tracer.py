@@ -1,33 +1,19 @@
 """
 Fieldline Tracing Interface for mapflpy (Single and Multiprocessing Modes)
 
-This module provides a Python interface for fieldline tracing using `mapflpy_fortran`
-(a wrapper for the Fortran-based `mapfl` tracing engine).
+This module provides a Python interface for fieldline tracing using ``mapflpy_fortran``
+(a wrapper for the Fortran-based ``mapfl`` tracing engine).
 
-It defines a unified tracing API through the abstract base class `_Tracer`, with two main
+It defines a unified tracing API through the abstract base class :class:`_Tracer`, with two main
 concrete implementations:
 
-- `Tracer`: Executes fieldline tracing in the current (main) Python process. Suitable for
+- :class:`Tracer`: Executes fieldline tracing in the current (main) Python process. Suitable for
   lightweight, single-threaded use cases.
-- `TracerMP`: Runs tracing in a background subprocess via `multiprocessing`, allowing
+- :class:`TracerMP`: Runs tracing in a background subprocess via :py:mod:`multiprocessing`, allowing
   multiple Tracer instances to coexist across processes without interfering with each
   other's state. This is required due to the global state held by the Fortran library.
-
-Decorators
-----------
-- `@state_modifier`: Marks a method that changes the internal configuration, flagging the
-  object as stale and requiring reinitialization.
-- `@flush_state`: Automatically re-runs the Fortran `run()` method if the object is stale
-  before executing the decorated method.
-- `@check_process_state`: Verifies that the multiprocessing listener is alive before sending
-  a request, and waits (with timeout) for a valid response.
-
-Subprocess Listener
--------------------
-The function `_mapflpy_trace_listener` is used internally by `TracerMP` to execute tracing
-commands in a background process. It supports `run`, `trace`, and `mapfl_id` requests via
-a `multiprocessing.Pipe`.
 """
+from __future__ import annotations
 from functools import wraps
 from multiprocessing import get_context
 from multiprocessing.shared_memory import SharedMemory
@@ -38,14 +24,14 @@ from collections import ChainMap
 from collections.abc import MutableMapping
 from pathlib import Path
 from types import MappingProxyType
-from typing import Iterable, Optional, Tuple
+from typing import Iterable, Optional, Tuple, Callable, Literal
 
 import numpy as np
 from numpy._typing import NDArray
 
 from psi_io import read_hdf_by_value
 
-from mapflpy._typing import (
+from mapflpy.typing import (
     DEFAULT_PARAMS,
     DEFAULT_FIELDS,
     MAGNETIC_FIELD_LABEL,
@@ -53,26 +39,33 @@ from mapflpy._typing import (
     DEFAULT_BUFFER_SIZE,
     MAGNETIC_FIELD_PATHS,
     PathType,
-    MagnetifFieldArrayType,
+    MagneticFieldArrayType,
     DirectionType,
     MagneticFieldLabelType,
     ArrayType,
-    Traces)
+    Traces, ContextType)
 from mapflpy.utils import fetch_default_launch_points, combine_fwd_bwd_traces
 
+__all__ = ["Tracer", "TracerMP",]
+
 _BS0 = np.zeros(3, order='F').astype(np.float64)
+"""Sentinel array for :meth:`mapfl.trace` **bs0** parameter."""
+
 _BS1 = np.zeros(3, order='F').astype(np.float64)
+"""Sentinel array for :meth:`mapfl.trace` **bs1** parameter."""
+
 _S = np.zeros(1, order='F').astype(np.float64)
+"""Sentinel array for :meth:`mapfl.trace` **s** parameter."""
 
 
 def state_modifier(method):
     """
     Decorator for mutator methods that modify internal state.
 
-    This decorator marks the tracer instance as "stale" by setting `self._stale = True`
+    This decorator marks the tracer instance as "stale" by setting ``self._stale = True``
     after executing the wrapped method. It is intended to be applied to methods that
     modify the internal parameter dictionary or magnetic field data in a way that
-    requires the tracer to be re-initialized (e.g., calling `run()` again).
+    requires the tracer to be re-initialized (e.g., calling ``run()`` again).
 
     Parameters
     ----------
@@ -98,11 +91,11 @@ def flush_state(method):
     """
     Decorator to ensure the tracer state is up-to-date before executing a method.
 
-    This decorator checks whether the instance is marked as "stale" (via `self._stale`).
-    If so, it calls `self._run()` to reinitialize the Fortran backend with current parameters
+    This decorator checks whether the instance is marked as "stale" (via ``self._stale``).
+    If so, it calls ``self._run()`` to reinitialize the Fortran backend with current parameters
     before proceeding to call the decorated method.
 
-    This ensures that the most recent configuration is applied to operations like `trace()`.
+    This ensures that the most recent configuration is applied to operations like ``trace()``.
 
     Parameters
     ----------
@@ -112,7 +105,7 @@ def flush_state(method):
     Returns
     -------
     Callable
-        A wrapped version of the method that automatically calls `self._run()` if needed.
+        A wrapped version of the method that automatically calls ``self._run()`` if needed.
     """
 
     @wraps(method)
@@ -130,22 +123,30 @@ def check_process_state(method):
     Decorator for TracerMP methods that communicate with the subprocess.
 
     This decorator ensures the subprocess is alive before invoking the method,
-    then waits (with timeout) for a response from the subprocess over the Pipe.
+    then waits (with timeout) for a response from the subprocess over the
+    :py:func:`~multiprocessing.Pipe`.
 
     It performs the following actions:
-    1. Checks if the subprocess (`self._process`) is still alive.
-       - If not, it calls `self.disconnect()` and raises a `RuntimeError`.
-    2. Calls the decorated method (which is expected to send a message via `self._parent.send(...)`).
-    3. Waits up to `self._timeout` seconds for a response from the subprocess via `self._parent.recv()`.
-       - If no message is received in time, it raises a `RuntimeError`.
+
+    1. Checks if the subprocess (``self._process``) is still alive.
+
+       - If not, it calls ``self.disconnect()`` and raises a :py:class:`RuntimeError`.
+
+    2. Calls the decorated method (which is expected to send a message via ``self._parent.send(...)``).
+
+    3. Waits up to ``self._timeout`` seconds for a response from the subprocess via ``self._parent.recv()``.
+
+       - If no message is received in time, it raises a :py:class:`RuntimeError`.
+
        - If a message is received, it returns the result to the caller.
 
-    This is intended for internal use within the `TracerMP` class only.
+    .. attention::
+        This is intended for internal use within the :class:`TracerMP` class only.
 
     Parameters
     ----------
     method : Callable
-        The method being decorated. Must send a command to the subprocess via self._parent.send().
+        The method being decorated. Must send a command to the subprocess via ``self._parent.send(...)``.
 
     Returns
     -------
@@ -161,7 +162,7 @@ def check_process_state(method):
     -----
     The timeout enforcement is primarily implemented due to the fact that certain errors
     that arise in mapflpy_fortran are not passed back to the caller; instead the error is
-    written to stdout and then hangs indefinitely. This decorator ensures that
+    written to ``stdout`` and then hangs indefinitely. This decorator ensures that
     such situations are handled gracefully by raising a timeout exception.
     """
 
@@ -208,32 +209,34 @@ def _mapflpy_trace_listener(pipe):
 
     This function is intended to be used in a separate Python process (typically spawned via
     `multiprocessing.Process`) to run fieldline tracing routines in isolation from the main process.
-    It receives commands over a `multiprocessing.Pipe`, processes them using the
+    It receives commands over a :py:func:`~multiprocessing.Pipe`, processes them using the
     `mapflpy_fortran.mapfl` interface, and sends results back over the pipe.
 
     This allows `TracerMP` to delegate tracing logic to a worker process while avoiding
     cross-process state conflicts and enabling safe multiprocessing.
 
-    Parameters
-    ----------
-    pipe : multiprocessing.connection.Connection
-        A bidirectional pipe endpoint connected to the parent process. Used for receiving commands
-        and sending back results.
+    The listener responds to messages received via ``pipe.recv()``. Each message must be a tuple
+    of the form:
+        ``(method_name: str, *args)``
 
-    Commands Supported
-    ------------------
-    The listener responds to messages received via `pipe.recv()`. Each message must be a tuple:
-        (method_name: str, *args)
+    **Supported Methods**
 
-    Supported methods:
-    - `"mapfl_id"`: Returns the `id(mapfl)` from the subprocess.
-    - `"run", iparams: dict, ifields: dict`:
+    - ``"mapfl_id",``:
+        Returns the ``id(mapfl)`` from the subprocess.
+    - ``"run", iparams: dict, ifields: dict``:
         Updates `mapfl_params` with provided parameters and magnetic field filepaths,
         reads new magnetic field data if needed, and invokes `mapfl.run(...)`.
-    - `"trace", launch_points: ndarray, buffer_size: int`:
+    - ``"trace", launch_points: ndarray, buffer_size: int``:
         Performs fieldline tracing using `mapfl.trace` for the given set of launch points and
         returns a `Traces` object.
-    - `"break"`: Terminates the subprocess listener loop.
+    - ``"break",``:
+        Terminates the subprocess listener loop.
+
+    Parameters
+    ----------
+    pipe : ~multiprocessing.connection.Connection
+        A bidirectional pipe endpoint connected to the parent process. Used for receiving commands
+        and sending back results.
 
     Notes
     -----
@@ -320,54 +323,61 @@ def _mapflpy_trace_listener(pipe):
 
 class _Tracer(MutableMapping, ABC):
     """
-    Abstract base class for fieldline tracing with `mapflpy_fortran`.
+    Abstract base class for fieldline tracing with :mod:`mapflpy_fortran`.
 
-    This class defines a dictionary-like interface to configure tracing parameters
-    for the `mapflpy_fortran` module, a python interface for the cross-compiled
-    `mapfl` FORTRAN code. It supports custom loading of magnetic field data and
-    provides common methods for managing the fieldline tracing lifecycle.
+    This class defines a mapping-like interface to configure tracing parameters
+    for the :mod:`mapflpy_fortran` module, a Python interface to the cross-compiled
+    ``mapfl`` Fortran code. It supports custom loading of magnetic field data and
+    provides common methods for managing the tracing lifecycle.
 
-    Subclasses must implement `__init__`, `_run`, `_trace`, and `_mapfl_id`.
+    .. warning::
+       This interface is designed as a base class for concrete implementations such as
+       :class:`~mapflpy.tracer.Tracer` (single-process) and
+       :class:`~mapflpy.tracer.TracerMP` (multiprocessing-safe).
+       Subclasses implement the tracing logic and interaction with
+       :func:`mapflpy_fortran.mapfl.run`.
+
+       **Subclasses must implement the following methods**
+
+       - :meth:`__init__`
+       - :meth:`_run`
+       - :meth:`_trace`
+       - :meth:`_mapfl_id`
 
     Parameters
     ----------
-    br : str or Path or None, optional
+    br : PathType, optional
         HDF filepath for the radial component of the magnetic field.
-    bt : str or Path or None, optional
+    bt : PathType, optional
         HDF filepath for the theta component of the magnetic field.
-    bp : str or Path or None, optional
+    bp : PathType, optional
         HDF filepath for the phi component of the magnetic field.
+
+    Other Parameters
+    ----------------
     **mapfl_params : dict
-        Additional tracing parameters passed directly to `mapflpy_fortran.mapfl.run()`.
-        These parameters will override the default parameters defined in `DEFAULT_PARAMS`.
+        Additional parameters forwarded to :func:`mapflpy_fortran.mapfl.run`.
+        These override defaults in :data:`~mapflpy.typing.DEFAULT_PARAMS`.
 
     Attributes
     ----------
-    _mapfl_params : ChainMap
-        Mapping of parameters passed to `run()` (which sets the global `mapfl` state).
+    _mapfl_params : ~collections.ChainMap
+        Mapping of parameters passed to :meth:`run` (which sets global ``mapfl`` state).
     _stale : bool
-        Indicates whether changes to _mapfl_params need to be propagated through `run()`.
+        Whether changes to :attr:`_mapfl_params` need to be propagated via :meth:`run`.
 
     Raises
     ------
-    ValueError
-        If an invalid value is provided for the magnetic field components.
-    TypeError
-        If the provided values for magnetic fields are not of the expected type (tuple or str).
-    FileNotFoundError
-        If the provided file paths for magnetic fields do not exist.
-    ImportError
-        If the `mapflpy_fortran` module cannot be imported, indicating that the Fortran
-        shared library is not available or not built correctly.
-
-    Notes
-    -----
-    This class is designed to be used as a base class for concrete implementations
-    of fieldline tracing, such as `Tracer` for single-process tracing and `TracerMP`
-    for multiprocessing-safe tracing. It provides a consistent interface for managing
-    magnetic field data and tracing parameters, while allowing subclasses to implement
-    the specific tracing logic and interaction with the `mapflpy_fortran` module.
+    :class:`ValueError`
+        If an invalid value is provided for magnetic field components.
+    :class:`TypeError`
+        If values are not of the expected type (``tuple`` or ``str``).
+    :class:`FileNotFoundError`
+        If provided file paths do not exist.
+    :class:`ImportError`
+        If :mod:`mapflpy_fortran` cannot be imported (shared library missing or not built).
     """
+
     __hash__ = object.__hash__
 
     @abstractmethod
@@ -414,22 +424,22 @@ class _Tracer(MutableMapping, ABC):
 
     @state_modifier
     def clear(self):
-        """Remove all tracing parameters."""
+        """Reset the mapfl :attr:`params` to their default values."""
         self._mapfl_params.clear()
 
     @state_modifier
     def update(self, *args, **kwargs):
-        """Update tracing parameters."""
+        """Update mapfl :attr:`params` with the provided key-value pairs."""
         self._mapfl_params.update(*args, **kwargs)
 
     @state_modifier
     def popitem(self):
-        """Remove and return the value of the given parameter."""
+        """Remove and return the value of the given mapfl :attr:`params` key."""
         return self._mapfl_params.popitem()
 
     @state_modifier
     def pop(self, __key):
-        """Pop an item from the mapflpy parameters."""
+        """Pop an item from the mapfl :attr:`params` ."""
         return self._mapfl_params.pop(__key)
 
     # -----------------------------------
@@ -437,36 +447,42 @@ class _Tracer(MutableMapping, ABC):
     # -----------------------------------
 
     @property
-    def br(self) -> Tuple[ArrayType, ArrayType, ArrayType, ArrayType] | str:
+    def br(self) -> MagneticFieldArrayType:
         """Return the radial component of the magnetic field and its scales.
-        NOTE: TracerMP subclass returns only the provided field file path."""
+
+        .. note::
+            :class:`TracerMP` subclass returns only the provided field file path."""
         return self._get_field('br')
 
     @br.setter
     @state_modifier
-    def br(self, value: MagnetifFieldArrayType) -> None:
+    def br(self, value: MagneticFieldArrayType) -> None:
         self._set_field('br', value)
 
     @property
-    def bt(self) -> Tuple[ArrayType, ArrayType, ArrayType, ArrayType] | str:
+    def bt(self) -> MagneticFieldArrayType:
         """Return the theta component of the magnetic field and its scales.
-        NOTE: TracerMP subclass returns only the provided field file path."""
+
+        .. note::
+            :class:`TracerMP` subclass returns only the provided field file path."""
         return self._get_field('bt')
 
     @bt.setter
     @state_modifier
-    def bt(self, value: MagnetifFieldArrayType) -> None:
+    def bt(self, value: MagneticFieldArrayType) -> None:
         self._set_field('bt', value)
 
     @property
-    def bp(self) -> Tuple[ArrayType, ArrayType, ArrayType, ArrayType] | str:
+    def bp(self) -> MagneticFieldArrayType:
         """Return the phi component of the magnetic field and its scales.
-        NOTE: TracerMP subclass returns only the provided field file path."""
+
+        .. note::
+            :class:`TracerMP` subclass returns only the provided field file path."""
         return self._get_field('bp')
 
     @bp.setter
     @state_modifier
-    def bp(self, value: MagnetifFieldArrayType) -> None:
+    def bp(self, value: MagneticFieldArrayType) -> None:
         self._set_field('bp', value)
 
     # ----------------------------------
@@ -475,32 +491,37 @@ class _Tracer(MutableMapping, ABC):
 
     @property
     def params(self) -> MappingProxyType:
-        """Return an immutable view of the mapflpy parameters."""
+        """Return an immutable view of the mapfl :attr:`_mapfl_params` dictionary."""
         return MappingProxyType(self._mapfl_params)
 
     @property
     def stale(self) -> bool:
-        """Indicates whether the parameters have changed since the last `run()` call."""
+        """Indicates whether the parameters have changed since the last :meth:`run` call."""
         return self._stale
 
     @property
     def mapfl_id(self) -> int:
-        """Return the memory ID of the mapflpy_fortran interface (useful for debugging).
-        Dispatches to overridden _mapfl_id() method in subclasses."""
+        """Return the memory ID of the ``mapflpy_fortran`` interface (useful for debugging).
+        Dispatches to overridden :meth:`_mapfl_id` method in subclasses."""
         return self._mapfl_id()
 
     @state_modifier
     def load_fields(self,
-                    br: MagnetifFieldArrayType,
-                    bt: MagnetifFieldArrayType,
-                    bp: MagnetifFieldArrayType
+                    br: MagneticFieldArrayType,
+                    bt: MagneticFieldArrayType,
+                    bp: MagneticFieldArrayType
                     ) -> None:
         """
         Load Br, Bt, and Bp fields into the input parameters.
 
+        .. note::
+            This method is equivalent to calling `Tracer.br = br, Tracer.bt = bt, and Tracer.bp = bp`.
+            The same constraints apply to the input values as for the individual setters, *e.g.* for
+            multiprocessing support in :class:`TracerMP`, the values must be paths to HDF files.
+
         Parameters
         ----------
-        br, bt, bp : str or tuple of 4 ndarrays
+        br, bt, bp : MagneticFieldArrayType
             Each should be an HDF filepath or tuple of (bx, bx_r, bx_t, bx_p),
             where bx is the magnetic field component and bx_r, bx_t, bx_p are
             the radial, theta, and phi scales respectively.
@@ -511,12 +532,6 @@ class _Tracer(MutableMapping, ABC):
             If the provided file paths do not exist.
         TypeError
             If the provided values are not of the expected type (tuple or str).
-
-        Notes
-        -----
-        This method is equivalent to calling `Tracer.br = br, Tracer.bt = bt, and Tracer.bp = bp`.
-        The same constraints apply to the input values as for the individual setters, *e.g.* for
-        multiprocessing support in TracerMP, the values must be paths to HDF files.
         """
         self._set_field('br', br)
         self._set_field('bt', bt)
@@ -524,16 +539,16 @@ class _Tracer(MutableMapping, ABC):
 
     def _set_field(self,
                    key: MagneticFieldLabelType,
-                   value: MagnetifFieldArrayType
+                   value: MagneticFieldArrayType
                    ) -> None:
         """
         Internal helper to register a magnetic field and its coordinate axes.
 
         Parameters
         ----------
-        key : {'br', 'bt', 'bp'}
+        key : MagneticFieldLabelType
             The magnetic field component label.
-        value : tuple or str or Path
+        value : MagneticFieldArrayType
             A 4-tuple of field data (data, r, t, p), or a path to an HDF file.
         """
         if key not in MAGNETIC_FIELD_LABEL:
@@ -575,13 +590,13 @@ class _Tracer(MutableMapping, ABC):
 
     def _get_field(self,
                    key: MagneticFieldLabelType
-                   ) -> Tuple[ArrayType, ArrayType, ArrayType, ArrayType] | str:
+                   ) -> MagneticFieldArrayType:
         """
         Retrieve a magnetic field component and its coordinates.
 
         Returns
         -------
-        field : tuple or str
+        field : MagneticFieldLabelType
             A tuple of (bx, bx_r, bx_t, bx_p) for the specified magnetic field component,
             or a path to an HDF file if using TracerMP.
         """
@@ -599,14 +614,14 @@ class _Tracer(MutableMapping, ABC):
 
         Parameters
         ----------
-        lps : array-like or None
+        lps : array-like, optional
             Launch points of shape (3, N) in spherical coordinates (r, t, p).
         kwargs : dict
             If `lps` is None, these are passed to `fetch_default_launch_points`.
 
         Returns
         -------
-        launch_points : ndarray
+        launch_points : np.ndarray
             A (3, N) Fortran-ordered array.
         """
         if lps is None:
@@ -618,7 +633,8 @@ class _Tracer(MutableMapping, ABC):
                     launch_points = launch_points.reshape((3, 1), order='F')
                 case 2:
                     if launch_points.shape[0] != 3:
-                        launch_points = launch_points.reshape((3, launch_points.shape[0]), order='F')
+                        launch_points = launch_points.reshape((3, launch_points.shape[
+                            0]), order='F')
                 case _:
                     raise ValueError("Launch points must be an array of r, t, p values")
         return launch_points
@@ -631,7 +647,7 @@ class _Tracer(MutableMapping, ABC):
 
         Parameters
         ----------
-        direction : {'f', 'b'}
+        direction : DirectionType
             'f' for forward tracing, 'b' for backward tracing.
         """
         if direction not in DIRECTION:
@@ -657,12 +673,12 @@ class _Tracer(MutableMapping, ABC):
 
         Parameters
         ----------
-        launch_points : ndarray or None
+        launch_points : np.ndarray, optional
             Array of shape (3, N) for r, t, p coordinates. If None, uses defaults.
         buffer_size : int
             Maximum number of steps per fieldline.
         kwargs : dict
-            Extra arguments passed to default launch point generator if `launch_points` is None.
+            Extra arguments passed to default launch point generator if ``launch_points`` is None.
 
         Returns
         -------
@@ -672,7 +688,7 @@ class _Tracer(MutableMapping, ABC):
 
         Notes
         -----
-        The `launch_points` should be in Fortran (column-major) order, i.e., shape (3, N).
+        The ``launch_points`` should be in Fortran (column-major) order, i.e., shape (3, N).
         where N is the number of launch points, and the first dimension (of size 3) corresponds
         to r, t, p coordinates in the carrington frame, such that:
             - r (radial distance) is in R_sun,
@@ -686,12 +702,13 @@ class _Tracer(MutableMapping, ABC):
         """
         Perform forward fieldline tracing from launch points.
 
-        This is a convenience method equivalent to calling `set_tracing_direction('f')`
-        before invoking `trace()`.
+        This is a convenience method equivalent to calling ``set_tracing_direction('f')``
+        before invoking ``trace``.
 
         See Also
         --------
-        See `trace()` for parameter details and complete documentation.
+        :meth:`trace`
+        :meth:`set_tracing_direction`
         """
         self.set_tracing_direction('f')
         return self.trace(*args, **kwargs)
@@ -700,12 +717,13 @@ class _Tracer(MutableMapping, ABC):
         """
         Perform backward fieldline tracing from launch points.
 
-        This is a convenience method equivalent to calling `set_tracing_direction('b')`
-        before invoking `trace()`.
+        This is a convenience method equivalent to calling ``set_tracing_direction('b')``
+        before invoking ``trace``.
 
         See Also
         --------
-        See `trace()` for parameter details and complete documentation.
+        :meth:`trace`
+        :meth:`set_tracing_direction`
         """
         self.set_tracing_direction('b')
         return self.trace(*args, **kwargs)
@@ -714,12 +732,15 @@ class _Tracer(MutableMapping, ABC):
         """
         Perform fieldline tracing in both forward and backward directions.
 
-        This is a convenience method equivalent to calling `trace_fwd()` and `trace_bwd()`
-        sequentially, combining the results into a single `Traces` object.
+        This is a convenience method equivalent to calling ``trace_fwd()`` and ``trace_bwd()``
+        sequentially, combining the results into a single :py:class:`~mapflpy.typing.Traces` object.
 
         See Also
         --------
-        See `trace()` for parameter details and complete documentation.
+        :meth:`trace`
+        :meth:`trace_fwd`
+        :meth:`trace_bwd`
+        :meth:`set_tracing_direction`
         """
         fwd_traces = self.trace_fwd(*args, **kwargs)
         bwd_traces = self.trace_bwd(*args, **kwargs)
@@ -736,7 +757,7 @@ class _Tracer(MutableMapping, ABC):
 
     @abstractmethod
     def _run(self) -> None:
-        """Invoke `mapfl.run()` with the current parameter set."""
+        """Invoke :meth:`run` with the current parameter set."""
         pass
 
     @abstractmethod
@@ -750,36 +771,37 @@ class _Tracer(MutableMapping, ABC):
 
 class Tracer(_Tracer):
     """
-    Concrete implementation of the `_Tracer` class for single-process fieldline tracing.
+    Concrete implementation of the :class:`_Tracer` class for single-process fieldline tracing.
 
-    This class provides a direct interface to the `mapflpy_fortran.mapfl` object
+    This class provides a direct interface to the ``mapflpy_fortran.mapfl`` object
     for tracing magnetic field lines using in-memory data and parameter control.
     It is not safe for use in multiprocessing contexts due to Fortran global state.
 
-    Notes
-    -----
-    - For subprocess-safe tracing (e.g. for multiprocessing), use `TracerMP`.
-    - This class enforces a singleton pattern within a process to avoid conflicts
-      with the Fortran global state, as managed by `_Tracer`.
+    .. attention::
+        - For subprocess-safe tracing (using :py:mod:`multiprocessing`), use :class:`TracerMP`.
+        - This class enforces a singleton pattern within a process to avoid conflicts
+          with the Fortran global state, as managed by :class:`_Tracer`.
 
     Parameters
     ----------
-    br : str or Path or None, optional
-        Path to the Br magnetic field HDF file. If None, Br is not loaded.
-    bt : str or Path or None, optional
-        Path to the Bt magnetic field HDF file. If None, Bt is not loaded.
-    bp : str or Path or None, optional
-        Path to the Bp magnetic field HDF file. If None, Bp is not loaded.
+    br : PathType, optional
+        HDF filepath for the radial component of the magnetic field.
+    bt : PathType, optional
+        HDF filepath for the theta component of the magnetic field.
+    bp : PathType, optional
+        HDF filepath for the phi component of the magnetic field.
     **mapfl_params : dict
-        Additional parameters for `mapfl.run()` and `mapfl.trace()`. Overrides defaults.
+        Additional tracing parameters passed directly to ``mapflpy_fortran.mapfl.run()``.
+        These parameters will override the default parameters defined in
+        :data:`~mapflpy.typing.DEFAULT_PARAMS`.
 
     Attributes
     ----------
-    _mapfl_params : ChainMap
-        Mapping of parameters passed to `run()` (which sets the global `mapfl` state).
+    _mapfl_params : ~collections.ChainMap
+        Mapping of parameters passed to :meth:`~mapflpy.tracer._Tracer.run` (which sets the global ``mapfl`` state).
     _stale : bool
-        Indicates whether changes to _mapfl_params need to be propagated through `run()`.
-    _instances : WeakSet
+        Indicates whether changes to :attr:`_mapfl_params` need to be propagated through :meth:`run`.
+    _instances : ~weakref.WeakSet
         A weak reference set to enforce singleton constraint for the Tracer class per process.
 
     Raises
@@ -796,7 +818,8 @@ class Tracer(_Tracer):
         If the `mapflpy_fortran` module cannot be imported, indicating that the Fortran
         shared library is not available or not built correctly.
     """
-    _instances = WeakSet()
+    _instances: WeakSet = WeakSet()
+    """Weak reference set to track Tracer instances for singleton enforcement."""
 
     def __init__(self,
                  br: Optional[PathType] = None,
@@ -812,36 +835,29 @@ class Tracer(_Tracer):
         import mapflpy.fortran.mapflpy_fortran as mapflpy_fortran
         self._mapfl = mapflpy_fortran.mapfl
 
-    def _mapfl_id(self):
+    def _mapfl_id(self) -> int:
         """
-        Return a unique identifier for the Fortran interface instance.
-
-        This helps distinguish different Fortran library handles in multi-process
-        environments, e.g. when debugging process isolation.
+        Return the memory ID of the Fortran interface (for process isolation validation).
 
         Returns
         -------
         int
-            The memory ID of the `mapfl` object.
+            The memory ID of the ``mapfl`` object.
         """
         return id(self._mapfl)
 
-    def _run(self):
+    def _run(self) -> None:
         """
-        Run the `mapfl.run()` method to configure the Fortran library with parameters.
+        Run the ``mapfl.run()`` method to configure the Fortran library with parameters.
 
         This sets the internal state of the tracing engine. Must be called before tracing
         if any parameters or fields have changed.
-
-        Returns
-        -------
-        None
         """
         return self._mapfl.run(**self._mapfl_params)
 
     def _trace(self,
                lps: NDArray[np.float64],
-               buff: int):
+               buff: int) -> Traces:
         """
         Run fieldline tracing from a set of launch points.
 
@@ -884,51 +900,54 @@ class Tracer(_Tracer):
 
 class TracerMP(_Tracer):
     """
-    Fieldline tracing wrapper class for `mapflpy` with multiprocessing support.
+    Fieldline tracing wrapper class for ``mapflpy`` with multiprocessing support.
 
     This class launches a separate subprocess that manages a persistent instance of the
-    `mapflpy_fortran` fieldline tracing engine. It communicates with the subprocess via a
-    `multiprocessing.Pipe` interface. This allows safe use of Fortran code that relies on
+    ``mapflpy_fortran`` fieldline tracing engine. It communicates with the subprocess via a
+    :py:func:`~multiprocessing.Pipe` interface. This allows safe use of Fortran code that relies on
     global state from Python without conflict across processes.
 
     This class is useful for:
     - Avoiding thread-safety issues with Fortran globals.
-    - Running multiple `TracerMP` instances in parallel via multiprocessing.
+    - Running multiple :class:`TracerMP` instances in parallel via multiprocessing.
 
     Notes
     -----
-    - This class is context-manager compatible (`with TracerMP(...) as tracer:`).
-    - You **must** call `connect()` before tracing (automatically done in `__enter__`).
-    - Remember to call `disconnect()` when done (or rely on `__exit__`).
+    - This class is context-manager compatible (``with TracerMP(...) as tracer:``).
+    - You **must** call :meth:`connect` before tracing (:meth:`__enter__`).
+    - Remember to call :meth:`disconnect` when done (:meth:`__exit__`).
     - **Manually adding fields loaded into memory is not supported**; use the
-      `br`, `bt`, and `bp` properties or `load_fields()` to set magnetic fields. Passing
-      large arrays directly to the subprocess is not efficient and may lead to
+      :attr:`br`, :attr:`bt`, and :attr:`bp` properties or :meth:`load_fields` to set magnetic
+      fields. Passing large arrays directly to the subprocess is not efficient and may lead to
       memory issues. Instead, provide paths to HDF files containing the fields.
 
     Parameters
     ----------
-    br : str or Path or None, optional
+    br : PathType, optional
         Path to the Br magnetic field file.
-    bt : str or Path or None, optional
+    bt : PathType, optional
         Path to the Bt magnetic field file.
-    bp : str or Path or None, optional
+    bp : PathType, optional
         Path to the Bp magnetic field file.
-    timeout : float or None, optional
+    timeout : float, optional
         Timeout in seconds for interprocess communication. Default is 10 seconds.
+    context : ContextType, optional
+        The multiprocessing context to use when spawning the subprocess.
+        Default is 'fork'. Note that 'fork' is not available on Windows.
     **mapfl_params : dict
         Additional tracing parameters passed to the subprocess.
 
     Attributes
     ----------
     _mapfl_params : ChainMap
-        Mapping of parameters passed to `run()` (which sets the global `mapfl` state).
+        Mapping of parameters passed to :meth:`run()` (which sets the global ``mapfl`` state).
     _stale : bool
-        Indicates whether changes to _mapfl_params need to be propagated through `run()`.
-    _process : multiprocessing.Process
+        Indicates whether changes to :attr:`_mapfl_params` need to be propagated through :meth:`run`.
+    _process : ~multiprocessing.Process
         The subprocess running the tracing engine.
-    _parent : multiprocessing.Connection
+    _parent : ~multiprocessing.connection.Connection
         Parent end of the communication pipe.
-    _child : multiprocessing.Connection
+    _child : ~multiprocessing.connection.Connection
         Child end (passed to the subprocess).
     _timeout : float
         Timeout value used in pipe communication.
@@ -952,11 +971,11 @@ class TracerMP(_Tracer):
                  br: Optional[PathType] = None,
                  bt: Optional[PathType] = None,
                  bp: Optional[PathType] = None,
-                 timeout: Optional[float] = 10,
+                 timeout: Optional[float] = 30,
+                 context: Optional[ContextType] = 'spawn',
                  **mapfl_params):
         # Setup communication pipe and subprocess
-        # TODO: evaluate 'spawn' vs 'fork' context for multiprocessing
-        ctx = get_context('spawn')
+        ctx = get_context(context)
         self._parent, self._child = ctx.Pipe()
         self._process = ctx.Process(target=_mapflpy_trace_listener, args=(self._child,))
         self._magnetic_fields = dict(MAGNETIC_FIELD_PATHS)
@@ -1012,16 +1031,16 @@ class TracerMP(_Tracer):
 
     def _set_field(self,
                    key: MagneticFieldLabelType,
-                   value: PathType
+                   value: Optional[PathType]
                    ) -> None:
         """
         Set the magnetic field file path for a given component ('br', 'bt', or 'bp').
 
         Parameters
         ----------
-        key : {'br', 'bt', 'bp'}
+        key : MagneticFieldLabelType
             The magnetic field component label.
-        value : str or Path or None
+        value : PathType, optional
             Path to the HDF file, or None to clear the field.
 
         Raises
@@ -1052,7 +1071,7 @@ class TracerMP(_Tracer):
 
         Parameters
         ----------
-        key : {'br', 'bt', 'bp'}
+        key : MagneticFieldLabelType
             The magnetic field component label.
 
         Returns
@@ -1073,13 +1092,13 @@ class TracerMP(_Tracer):
     @check_process_state
     def _mapfl_id(self):
         """
-        Request the internal `mapfl` object ID from the subprocess.
+        Request the internal ``mapfl`` object ID from the subprocess.
 
         This sends a message to the child process asking for its ID.
 
-        Notes
-        -----
-        Return handling and error checking is done in the `check_process_state` decorator.
+        .. note::
+            Return handling and error checking is done in the
+            :func:`~mapflpy.tracer.check_process_state` decorator.
         """
         self._parent.send(("mapfl_id",))
 
@@ -1091,9 +1110,9 @@ class TracerMP(_Tracer):
         This triggers the `mapfl.run()` call inside the worker process with the
         current parameter and field configuration.
 
-        Notes
-        -----
-        Return handling and error checking is done in the `check_process_state` decorator.
+        .. note::
+            Return handling and error checking is done in the
+            :func:`~mapflpy.tracer.check_process_state` decorator.
         """
         self._parent.send(("run", self._mapfl_params.maps[0], self._magnetic_fields))
 
@@ -1104,15 +1123,15 @@ class TracerMP(_Tracer):
         """
         Send trace request to the subprocess.
 
+        .. note::
+            Return handling and error checking is done in the
+            :func:`~mapflpy.tracer.check_process_state` decorator.
+
         Parameters
         ----------
         lps : ndarray
             Launch points array in shape (3, N), Fortran-ordered.
         buff : int
             Maximum number of steps in each trace.
-
-        Notes
-        -----
-        Return handling and error checking is done in the `check_process_state` decorator.
         """
         self._parent.send(("trace", lps, buff))

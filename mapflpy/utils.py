@@ -1,32 +1,48 @@
 """
-Utility functions for mapflpy.
+Utility functions for processing fieldline traces.
 """
-import importlib.util
+from __future__ import annotations
 import math
+import os
 import random
-from typing import Tuple, List
+from collections import namedtuple
+from pathlib import Path
+from typing import Tuple, List, Any, Literal
 
 import numpy as np
 from numpy._typing import NDArray
 from psi_io import interpolate_positions_from_hdf
 
-from mapflpy._typing import Traces, Polarity, ArrayType, PathType
+from mapflpy.typing import Traces, Polarity, ArrayType, PathType
+
+__all__ = [
+    'shift_phi_lps',
+    'shift_phi_traces',
+    'fibonacci_sphere',
+    'fetch_default_launch_points',
+    'combine_fwd_bwd_traces',
+    'get_fieldline_polarity',
+    'get_fieldline_endpoints',
+    'get_fieldline_npoints',
+    'trim_fieldline_nan_buffer'
+]
 
 
-def shift_phi_lps(lp, phi_shift=0.0):
+def shift_phi_lps(lp: Any, phi_shift: float = 0.0):
     """
     Shift a Fortran ordered (3,N) launch point array in longitude by phi_shift radians.
 
     Parameters
     ----------
-    lp : any
+    lp : Any
         Launch points for fieldline tracing. Here we assume `lp[2,:]` is the phi coordinate.
     phi_shift : float
         The longitudinal shift in radians. Defualt is 0.0.
 
     Returns
     -------
-    A copy of lp shifted in longitude.
+    lp : Any
+        A copy of lp shifted in longitude.
 
     """
     if np.isclose(phi_shift, 0.0):
@@ -42,14 +58,16 @@ def shift_phi_traces(traces, phi_shift=0.0):
 
     Parameters
     ----------
-    traces : list of numpy.ndarrrays.
-        List of mapflpy traces. It assumes that for each `trace` in `traces` that `trace[2,:]` is the phi coordinate.
+    traces : list of ndarray
+        List of mapflpy traces. It assumes that for each `trace` in `traces` that `trace[2,:]`
+        is the phi coordinate.
     phi_shift : float
         The longitudinal shift in radians. Defualt is 0.0.
 
     Returns
     -------
-    A copy of the traces list shifted in longitude.
+    traces : list of ndarray
+        A copy of the traces list shifted in longitude.
 
     """
     if np.isclose(phi_shift, 0.0):
@@ -62,23 +80,28 @@ def shift_phi_traces(traces, phi_shift=0.0):
 
 def fibonacci_sphere(samples=100, randomize=False):
     """
-    Generate a set of N points that will evenly sample a unit sphere. Unlike a uniform grid in phi/theta,
-    These points are roughly equidistant at *all* lat lon locations (think a soccer ball).
+    Generate a set of N points that will evenly sample a unit sphere.
 
-    This code was adapted by RC from various samples on the internet and used in an MIDM poster.
+    Unlike a uniform grid in phi/theta, These points are roughly equidistant at
+    *all* lat lon locations (think a soccer ball).
+
+    .. note::
+        This code was adapted by RC from various samples on the internet
+        and used in an MIDM poster.
 
     Parameters
     ----------
     samples : int
         Number of points to spread out over the unit sphere.
     randomize : bool
-        Option to randomize where the N points show up (breaks up the eveness), default is False.
+        Option to randomize where the N points show up (breaks up the eveness),
+        default is False.
 
     Returns
     -------
-    p: numpy.ndarray
+    p: ndarray
         1D numpy array of phi (longitude) positions [radians, 0-2pi].
-    t: numpy.ndarray
+    t: ndarray
         1D numpy array of theta (co-latitude) positions [radians, 0-pi].
     """
     rnd = 1.
@@ -165,9 +188,11 @@ def combine_fwd_bwd_traces(fwd_traces: Traces,
     Parameters
     ----------
     fwd_traces : Traces
-        Output from `_Tracer.trace()` when tracing direction is set to forward.
+        Output from :meth:`~mapflpy.tracer._Tracer.trace()` when
+        tracing direction is set to forward.
     bwd_traces : Traces
-        Output from `_Tracer.trace()` when tracing direction is set to backward.
+        Output from :meth:`~mapflpy.tracer._Tracer.trace()` when
+        tracing direction is set to backward.
 
     Returns
     -------
@@ -176,13 +201,16 @@ def combine_fwd_bwd_traces(fwd_traces: Traces,
 
     Notes
     -----
-    This function assumes that the launch points for the two `trace()` calls where
-    the same, and that for each Traces object, the `geometry` is a 3D array of size
-    (M, 3, N), where M is the number of points along the field line, N is the
-    number of field lines, and the second dimension corresponds to the coordinates
-    (r, t, p).
+    This function assumes that the launch points for the two ``trace()`` calls are
+    the same, and that for each :class:`Traces` object, the :data:`Traces.geometry`
+    is a 3D array of size (M, 3, N), where
+
+    - M is the number of points along the field line,
+    - N is the number of field lines, and
+    - the second dimension corresponds to the coordinates (r, t, p).
     """
-    combined_traces = Traces(np.concatenate([np.flip(bwd_traces.geometry, axis=0)[:-1, :, :], fwd_traces.geometry]),
+    combined_traces = Traces(np.concatenate([np.flip(bwd_traces.geometry, axis=0)[:-1, :, :],
+                                             fwd_traces.geometry]),
                              bwd_traces.end_pos,
                              fwd_traces.end_pos,
                              fwd_traces.traced_to_boundary & bwd_traces.traced_to_boundary)
@@ -212,7 +240,7 @@ def get_fieldline_polarity(inner_boundary: float,
     br_filepath : str or Path
         Path to an HDF file containing the Br (radial magnetic field) component data.
         This is used to determine the sign of open field lines.
-    *traces : Traces or (start_points, end_points)
+    *traces : Traces or tuple of ndarray
         Either a single `Traces` object containing field line tracing results,
         or a tuple of two arrays `(start_points, end_points)` with shape (3, N),
         where N is the number of field lines.
@@ -222,27 +250,28 @@ def get_fieldline_polarity(inner_boundary: float,
 
     Returns
     -------
-    polarity : np.ndarray of Polarity
+    polarity : ndarray of Polarity
         An array of integer enum values representing the polarity of each field line:
-        - `Polarity.R0_R1_POS`: Open field line from inner to outer boundary with positive Br.
-        - `Polarity.R0_R1_NEG`: Open field line from inner to outer boundary with negative Br.
-        - `Polarity.R0_R0`: Closed field line that begins and ends on the inner boundary.
-        - `Polarity.R1_R1`: Disconnected field line (begins and ends on the outer boundary).
-        - `Polarity.ERROR`: Field line does not reach one or both of the inner/outer boundaries.
+
+            - `Polarity.R0_R1_POS`: Open field line from inner to outer boundary with positive Br.
+            - `Polarity.R0_R1_NEG`: Open field line from inner to outer boundary with negative Br.
+            - `Polarity.R0_R0`: Closed field line that begins and ends on the inner boundary.
+            - `Polarity.R1_R1`: Disconnected field line (begins and ends on the outer boundary).
+            - `Polarity.ERROR`: Field line does not reach one or both of the inner/outer boundaries.
 
     Raises
     ------
     ValueError
         If the number or type of arguments in `traces` is invalid.
     ImportError
-        If the optional `scipy` library is not installed, which is required for
-        `interpolate_positions_from_hdf()`.
+        If the optional :py:mod:`scipy` library is not installed, which is required for
+        ``psi_io.interpolate_positions_from_hdf``.
 
     Notes
     -----
-    - This function assumes that the `br_filepath` contains the radial magnetic field component.
+    - This function assumes that the :attr:`br_filepath` contains the radial magnetic field component.
     - If one has done both a forward and backward trace, the traces should be merged first
-      using `combine_fwd_bwd_traces()` before checking polarity.
+      using :func:`combine_fwd_bwd_traces` before checking polarity.
     """
     # Create `endpoints` which is a (2, 3, N) array where N is the number of field lines.
     # The first dimension is for start and end points, the second for coordinates (r, t, p)
@@ -265,10 +294,12 @@ def get_fieldline_polarity(inner_boundary: float,
     closed_fls = np.isclose(endpoints[0, 0, ...], endpoints[1, 0, ...], **kwargs)
 
     # If the closed fiedlines start and end at the inner boundary, they are true "closed" field lines.
-    polarity[closed_fls & np.isclose(endpoints[0, 0, ...], inner_boundary, **kwargs)] = Polarity.R0_R0
+    polarity[closed_fls & np.isclose(
+        endpoints[0, 0, ...], inner_boundary, **kwargs)] = Polarity.R0_R0
 
     # If the closed fieldlines start and end at the outer boundary, they are disconnected field lines.
-    polarity[closed_fls & np.isclose(endpoints[0, 0, ...], outer_boundary, **kwargs)] = Polarity.R1_R1
+    polarity[closed_fls & np.isclose(
+        endpoints[0, 0, ...], outer_boundary, **kwargs)] = Polarity.R1_R1
 
     # Check for open field lines, i.e. field lines that start at one boundary and end at the other.
     open_fls = np.isclose(endpoints[0, 0, ...], inner_boundary, **kwargs) & np.isclose(
@@ -280,10 +311,12 @@ def get_fieldline_polarity(inner_boundary: float,
         # and (for open field lines that started at the outer boundary and ended at the inner boundary),
         # the appropriate endpoint is used, i.e. the endpoint at the inner boundary.
         br_values = interpolate_positions_from_hdf(*np.concatenate((endpoints[0, :, open_fls],
-                                                                    endpoints[1, :, open_inv])).T,
+                                                                    endpoints[1, :,
+                                                                    open_inv])).T,
                                                    ifile=str(br_filepath))
         pvalues = np.sign(br_values)
-        polarity[open_fls | open_inv] = np.where(pvalues < 0, Polarity.R0_R1_NEG, Polarity.R0_R1_POS)
+        polarity[
+            open_fls | open_inv] = np.where(pvalues < 0, Polarity.R0_R1_NEG, Polarity.R0_R1_POS)
     return polarity
 
 
@@ -332,13 +365,13 @@ def get_fieldline_npoints(traces) -> NDArray[int]:
 
     Parameters
     ----------
-    traces : Traces or np.ndarray
-        A `Traces` object or a 3D array of shape (M, 3, N),
+    traces : Traces or ndarray
+        A ``Traces`` object or a 3D array of shape (M, 3, N),
         where NaNs indicate unused portions of the buffer.
 
     Returns
     -------
-    npoints : np.ndarray of int
+    npoints : ndarray of int
         An array of shape (N,) indicating the number of valid points
         in each of the N fieldlines.
     """
@@ -357,12 +390,12 @@ def trim_fieldline_nan_buffer(traces) -> List[NDArray[float]]:
 
     Parameters
     ----------
-    traces : Traces or np.ndarray
+    traces : Traces or ndarray
         A `Traces` object or a 3D array of shape (M, 3, N).
 
     Returns
     -------
-    trimmed : list of np.ndarray
+    trimmed : list of ndarray
         A list of N arrays, each of shape (3, n_i), where n_i is the
         number of valid points in the i-th fieldline. All NaN values
         along axis 0 (point index) are removed.
@@ -377,3 +410,137 @@ def trim_fieldline_nan_buffer(traces) -> List[NDArray[float]]:
     """
     fls = traces.geometry if isinstance(traces, Traces) else traces
     return [v[:, ~np.isnan(v).any(axis=0)] for v in fls.T]
+
+
+def s2c(r, t, p):
+    """
+    convert numpy arrays of r,t,p (spherical) to x,y,z (cartesian)
+    - r, t, p are numpy arrays of any shape (must match). t and p must be in radians.
+    - x, y, z are returned in the same units as r.
+    """
+    ct = np.cos(t)
+    st = np.sin(t)
+    cp = np.cos(p)
+    sp = np.sin(p)
+    x = r * cp * st
+    y = r * sp * st
+    z = r * ct
+    return x, y, z
+
+
+def plot_traces(*iargs, ax=None):
+    """
+    Quick and dirty 3D plot of fieldlines using matplotlib.
+
+    Parameters
+    ----------
+    *iargs : Traces or ndarray
+        One or more `Traces` objects or 3D arrays of shape (M, 3, N).
+        Each argument will be plotted in a different color.
+
+    Notes
+    -----
+    This function is intended for quick visualization of fieldline traces.
+    For more advanced plotting capabilities, consider using libraries like
+    PyVista or Mayavi.
+    """
+    import matplotlib
+    from mpl_toolkits.mplot3d.art3d import Line3DCollection
+    if ax is None:
+        import matplotlib.pyplot as plt
+        ax = plt.figure().add_subplot(111, projection='3d')
+
+    for traces in iargs:
+        fls = traces.geometry if isinstance(traces, Traces) else traces
+        x, y, z = s2c(fls[:, 0, :], fls[:, 1, :], fls[:, 2, :])
+        x, y, z = x.T, y.T, z.T
+
+        segments = [np.column_stack([x[i], y[i], z[i]]) for i in range(x.shape[0])]
+
+        # Choose colormap
+        colors = matplotlib.colormaps['hsv'](np.random.random_sample(len(segments)))
+
+        lc = Line3DCollection(segments, colors=colors, linewidths=1.0)
+        ax.add_collection3d(lc)
+
+    ax.set_xlim3d(-5, 5)
+    ax.set_ylim3d(-5, 5)
+    ax.set_zlim3d(-5, 5)
+
+    return ax
+
+
+def plot_sphere(values, r, t, p, ax=None):
+    """
+    Quick and dirty 3D plot of a spherical surface using matplotlib.
+
+    Parameters
+    ----------
+    values : ndarray
+        A 2D array of shape (len(t), len(p)) representing the values on the spherical surface.
+    r : float
+        The radius at which to plot the spherical surface.
+    t : ndarray
+        A 1D array of theta (co-latitude) positions [radians, 0-pi].
+    p : ndarray
+        A 1D array of phi (longitude) positions [radians, 0-2pi].
+
+    Notes
+    -----
+    This function is intended for quick visualization of spherical surfaces.
+    For more advanced plotting capabilities, consider using libraries like
+    PyVista or Mayavi.
+    """
+    import matplotlib
+    if ax is None:
+        import matplotlib.pyplot as plt
+        ax = plt.figure().add_subplot(111, projection='3d')
+
+    # Create a meshgrid for theta and phi
+    T, P = np.meshgrid(t, p, indexing='ij')
+
+    # Convert spherical to Cartesian coordinates
+    X, Y, Z = s2c(r, T, P)
+
+    # Plot the surface with the provided values as color mapping
+    # Plot sphere surface with colormap
+    surf = ax.plot_surface(
+        X, Y, Z,
+        facecolors=matplotlib.colormaps['seismic']((values - values.min()) / (values.max() - values.min())),
+        rstride=1, cstride=1,
+        linewidth=0, antialiased=False, shade=False
+    )
+
+    # Set equal aspect ratio and turn off axes
+    ax.set_box_aspect([1, 1, 1])
+    ax.set_axis_off()
+
+    # Set orthographic projection
+    # ax.set_proj_type("ortho")
+
+    # Set camera view
+    ax.view_init(elev=20, azim=45)
+
+    return ax
+
+
+MagneticFieldFiles = namedtuple("MagneticFieldFiles", ("br", "bt", "bp"))
+
+
+def _fetch_magnetic_field_files(domain: Literal['cor', 'hel']) -> tuple[Path, Path, Path]:
+    in_sphinx = (
+        "SPHINX_GALLERY_CONF_DIR" in os.environ
+        or "SPHINX_GALLERY_BUILD" in os.environ
+        or "READTHEDOCS" in os.environ
+    )
+    print(in_sphinx)
+    ASSETS = Path(__file__).resolve().parents[1] / "docs" / "source" / "_static" / "assets"
+
+    if not in_sphinx:
+        import matplotlib
+        matplotlib.use('TkAgg')
+    return MagneticFieldFiles(
+        ASSETS / f"2143-mast2-{domain}" / "br002.h5",
+        ASSETS / f"2143-mast2-{domain}" / "bt002.h5",
+        ASSETS/ f"2143-mast2-{domain}" / "bp002.h5"
+    )

@@ -34,19 +34,19 @@ def _mp_start_method():
 
 @pytest.fixture(scope="session")
 def dipole_field_factory():
-    from mapflpy.tests.utils import dipole_field
+    from tests.utils import dipole_field
     return dipole_field
 
 
 @pytest.fixture(scope="session")
 def launch_point_factory():
-    from mapflpy.tests.utils import _recreate_lps_from_defaults
+    from tests.utils import _recreate_lps_from_defaults
     return _recreate_lps_from_defaults
 
 
 @pytest.fixture(scope="session")
 def default_params():
-    from mapflpy.tests.utils import read_defaults
+    from tests.utils import read_defaults
     return read_defaults()
 
 
@@ -69,7 +69,7 @@ def reference_traces():
 
 @pytest.fixture(scope="session")
 def _default_fields_cached(default_mesh_params):
-    from mapflpy.tests.utils import dipole_field
+    from tests.utils import dipole_field
     return dipole_field(**default_mesh_params["base"], **default_mesh_params["params"]["normal"])
 
 
@@ -191,7 +191,7 @@ def TracerMP(tracer_cls):
 
 @pytest.fixture
 def defaults():
-    from mapflpy._typing import DEFAULT_PARAMS, DEFAULT_FIELDS, MAGNETIC_FIELD_PATHS
+    from mapflpy.typing import DEFAULT_PARAMS, DEFAULT_FIELDS, MAGNETIC_FIELD_PATHS
     return DEFAULT_PARAMS, DEFAULT_FIELDS, MAGNETIC_FIELD_PATHS
 
 

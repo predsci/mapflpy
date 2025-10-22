@@ -1,7 +1,7 @@
 import pytest
 from numpy.testing import assert_allclose
 
-from mapflpy.tests.utils import compute_weighted_fieldline_difference
+from tests.utils import compute_weighted_fieldline_difference
 from mapflpy.utils import trim_fieldline_nan_buffer, combine_fwd_bwd_traces
 
 

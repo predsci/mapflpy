@@ -1,16 +1,9 @@
 API Reference
 =============
 
-.. toctree::
-   :maxdepth: 2
-   :hidden:
-
-    Tracer <tracer>
-
 .. autosummary::
-   :toctree: _autosummary
+   :toctree: ../autodoc/api
+   :template: autosummary/package.rst
 
-   mapflpy.tracer.Tracer
-    mapflpy.tracer.TracerMP
+   mapflpy
 
-For examples, see :class:`mapflpy.tracer.TracerMP`.

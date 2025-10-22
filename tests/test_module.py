@@ -1,12 +1,9 @@
 # tests/test_tracer.py
-import gc
 import json
-
-import pytest
 
 
 def test_shared_object():
-    from mapflpy.tests.utils import check_shared_object
+    from tests.utils import check_shared_object
     location = check_shared_object()
     assert location and isinstance(location, str)
 

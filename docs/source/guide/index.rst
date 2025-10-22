@@ -1,12 +1,12 @@
 User Guide
 ==========
-Welcome to the MapFLPy User Guide!
 
 .. toctree::
-   :maxdepth: 2
-   :hidden:
+    :hidden:
 
-    Installation <installation>
-    Development <development>
+    installation
+    dependencies
+    getting_started
 
-For a more general description of our API, see :ref:`installation_pip`.
+
+For a more general description of our API

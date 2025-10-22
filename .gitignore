@@ -76,9 +76,15 @@ mapflpy_fortranmodule.c
 # ─────────────────────────────────────────────────────────────────────────────
 docs/?build/
 docs/build/
-docs/generated
+docs/_intersphinx/
+docs/source/autodoc
+docs/source/gallery
 _autosummary/
 *sg_execution_times.rst
+
+!docs/_build/.gitkeep
+!docs/
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Testing / coverage

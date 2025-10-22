@@ -1,12 +1,90 @@
+"""
+Module defining custom types, enumerations, and constants for the mapflpy package.
+"""
+
+
+from __future__ import annotations
+
 from collections import namedtuple
 from enum import IntEnum
 from os import PathLike
 from pathlib import Path
 from types import MappingProxyType
-from typing import Literal, Tuple
+from typing import Literal, TypeVar, TypeAlias
 
-from numpy import float64, float32
-from numpy._typing import NDArray
+import numpy as np
+import numpy.typing as npt
+
+__all__ = [
+    'Traces',
+    'Polarity',
+    'MAGNETIC_FIELD_PATHS',
+    'DEFAULT_FIELDS',
+    'DEFAULT_PARAMS',
+]
+
+
+# ------------------------------------------------------------------------------
+# Named tuple for storing trace information.
+# This is used to return the results of tracing operations.
+# It contains the geometry of the traces, their start and end positions,
+# and whether they were traced to a boundary.
+#------------------------------------------------------------------------------
+Traces = namedtuple('Traces', ['geometry', 'start_pos', 'end_pos', 'traced_to_boundary'])
+Traces.__doc__ = (
+    """Named tuple for storing magnetic fieldline trace information.
+    
+    Attributes
+    ----------
+    geometry : ndarray
+        Array of shape (N, M, 3) containing the 3D coordinates of the traced fieldlines,
+        where N is the number of fieldlines and M is the number of points per fieldline.
+    start_pos : ndarray
+        Array of shape (N, 3) containing the starting positions of each fieldline.
+    end_pos : ndarray
+        Array of shape (N, 3) containing the ending positions of each fieldline.
+    traced_to_boundary : ndarray
+        Boolean array of shape (N,) indicating whether each fieldline was traced to a boundary.
+    """
+)
+
+
+# ------------------------------------------------------------------------------
+# Type aliases for improved code readability.
+# ------------------------------------------------------------------------------
+NumberType = TypeVar(
+    'NumberType',
+    bound=np.floating | np.integer | np.bool_ | float | int | bool,
+)
+"""Type variable for numeric types, including NumPy and built-in types."""
+
+DirectionType: TypeAlias = Literal["f", "b"]
+"""Type alias for tracing direction, *viz.* 'f' (forward) or 'b' (backward)."""
+
+MagneticFieldLabelType: TypeAlias = Literal["br", "bt", "bp"]
+"""Type alias for magnetic field component labels."""
+
+ContextType: TypeAlias = Literal["fork", "spawn", "forkserver"]
+"""Type alias for multiprocessing context types."""
+
+PathType: TypeAlias = str | Path | PathLike[str]
+"""Type alias for file path representations."""
+
+ArrayType: TypeAlias = npt.NDArray[NumberType]
+"""Type alias for NumPy arrays containing numeric types."""
+
+MagneticFieldArrayType: TypeAlias = tuple[ArrayType, ArrayType, ArrayType, ArrayType] | PathType
+"""Type alias for magnetic field data, either as a tuple of NumPy arrays
+    for (Br, Bt, Bp, r) or as a file path to HDF5 data."""
+
+DEFAULT_BUFFER_SIZE = 2000
+"""Default buffer size for mapfl traces."""
+
+MAGNETIC_FIELD_LABEL = ('br', 'bt', 'bp')
+"""Labels for magnetic field components, *viz.* radial (br), theta (bt), and phi (bp)."""
+
+DIRECTION = ('f', 'b')
+"""Tracing directions, *viz.* 'f' (forward) or 'b' (backward)."""
 
 
 class Polarity(IntEnum):
@@ -18,8 +96,8 @@ class Polarity(IntEnum):
     type of connectivity (open, closed, or invalid) and, for open
     lines, the sign of the radial magnetic field at the footpoint.
 
-    Members
-    -------
+    Attributes
+    ----------
     R0_R1_NEG : int (-2)
         Open fieldline connecting from the inner boundary (R0)
         to the outer boundary (R1) with a **negative** radial
@@ -55,25 +133,6 @@ class Polarity(IntEnum):
 
 
 # ------------------------------------------------------------------------------
-# Named tuple for storing trace information.
-# This is used to return the results of tracing operations.
-# It contains the geometry of the traces, their start and end positions,
-# and whether they were traced to a boundary.
-#------------------------------------------------------------------------------
-Traces = namedtuple('Traces', ['geometry', 'start_pos', 'end_pos', 'traced_to_boundary'])
-
-DirectionType = Literal['f', 'b']
-MagneticFieldLabelType = Literal['br', 'bt', 'bp']
-PathType = str | Path | PathLike[str]
-ArrayType = NDArray[float64 | float32]
-MagnetifFieldArrayType = Tuple[ArrayType, ArrayType, ArrayType, ArrayType] | PathType
-
-DEFAULT_BUFFER_SIZE = 2000                  # Default buffer size for reading HDF files
-MAGNETIC_FIELD_LABEL = ('br', 'bt', 'bp')   # Magnetic field labels
-DIRECTION = ('f', 'b')                      # Direction of tracing (forward or backward)
-
-
-# ------------------------------------------------------------------------------
 # Base dictionary for maintaining magnetic field filepaths.
 # Used to pass field data within the TracerMP class.
 # ------------------------------------------------------------------------------
@@ -82,6 +141,8 @@ MAGNETIC_FIELD_PATHS = MappingProxyType({
     'bt': '',
     'bp': '',
 })
+"""Base dictionary for magnetic field file paths *viz.* used in
+:class:`~mapflpy.tracer.TracerMP`."""
 
 
 # ------------------------------------------------------------------------------
@@ -111,6 +172,7 @@ DEFAULT_FIELDS = MappingProxyType({
     'bp_p': None,
     'bp_np': None,
 })
+"""Base dictionary for magnetic field arrays and scales."""
 
 # ------------------------------------------------------------------------------
 # The following MAPFL_PARAMS are modeled after the mapfl.in file. However, the
@@ -201,3 +263,15 @@ DEFAULT_PARAMS = MappingProxyType({
     'write_traces_root_': 'fl',
     'write_traces_as_xyz_': True,
 })
+"""Base dictionary for MAPFL parameters used in tracing operations.
+
+For general use of the :class:`~mapflpy.tracer._Tracer` class (and its subclasses), 
+these parameters should be sufficient.
+
+.. warning::
+    This set of parameters is modeled after the ``mapfl.in`` file. With that said, 
+    ``mapflpy`` does not yet implement all possible functionality from the original
+    ``MAPFL`` Fortran. Therefore, some parameters may be ignored or not yet implemented.
+    Future releases will aim to expand this functionality, and the documentation will
+    be extended to articulate which of these parameters can be manipulated.  
+"""

@@ -2,7 +2,7 @@ import pytest
 from numpy.testing import assert_allclose
 
 from mapflpy.scripts import run_foward_tracing, run_backward_tracing, run_fwdbwd_tracing, inter_domain_tracing
-from mapflpy.tests.utils import compute_fieldline_length, compute_weighted_fieldline_difference
+from tests.utils import compute_fieldline_length, compute_weighted_fieldline_difference
 from mapflpy.utils import trim_fieldline_nan_buffer, combine_fwd_bwd_traces
 
 

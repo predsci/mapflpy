@@ -1,6 +1,17 @@
 """
-Methods to instantiate and call the mapflpy_fortran tracer using subprocess commands.
+Standalone functions for running mapflpy tracing routines.
+
+These functions provide a simplified interface for performing forward, backward, and
+forward-backward tracing using the :any:`TracerMP` class. They handle the initialization
+and execution of the tracing processes, allowing users to easily obtain tracing results
+without needing to manage the underlying tracer objects directly.
+
+This module also includes a specialized function for inter-domain tracing, which coordinates
+tracing between two different magnetic domains (*viz.*, coronal and heliospheric) using
+multiprocessing. This function manages the complexities of boundary conditions and trace
+concatenation.
 """
+from __future__ import annotations
 import copy
 from functools import partial
 from typing import Optional, Iterable, Tuple
@@ -8,9 +19,16 @@ from typing import Optional, Iterable, Tuple
 import numpy as np
 from numpy._typing import NDArray
 
-from mapflpy._typing import DEFAULT_BUFFER_SIZE, Traces, PathType, DirectionType
+from mapflpy.typing import DEFAULT_BUFFER_SIZE, Traces, PathType, DirectionType
 from mapflpy.tracer import TracerMP
 from mapflpy.utils import shift_phi_traces, shift_phi_lps, fetch_default_launch_points, combine_fwd_bwd_traces
+
+__all__ = [
+    "run_foward_tracing",
+    "run_backward_tracing",
+    "run_fwdbwd_tracing",
+    "inter_domain_tracing"
+]
 
 
 def run_foward_tracing(br: PathType,
@@ -18,7 +36,7 @@ def run_foward_tracing(br: PathType,
                        bp: PathType,
                        launch_points: Optional[Iterable[float]] = None,
                        buffer_size: int = DEFAULT_BUFFER_SIZE,
-                       **mapfl_params
+                       **kwargs
                        ) -> Traces:
     """
     Run forward tracing using TracerMP.
@@ -39,8 +57,8 @@ def run_foward_tracing(br: PathType,
         Launch points used by the tracer. If None, default launch points will be used.
     buffer_size : int
         Buffer size for trace geometry. Default is 2000.
-    mapfl_params : dict
-        Additional keyword arguments to be passed to the `TracerMP` initialization.
+    kwargs : dict
+        Additional keyword arguments to be passed to the :any:`TracerMP` initialization.
 
     Returns
     -------
@@ -48,7 +66,7 @@ def run_foward_tracing(br: PathType,
         A `Traces` object containing the results of the forward tracing.
 
     """
-    with TracerMP(br, bt, bp, **mapfl_params) as tracer:
+    with TracerMP(br, bt, bp, **kwargs) as tracer:
         return tracer.trace_fwd(launch_points, buffer_size)
 
 
@@ -57,7 +75,7 @@ def run_backward_tracing(br: PathType,
                          bp: PathType,
                          launch_points: Optional[Iterable[float]] = None,
                          buffer_size: int = DEFAULT_BUFFER_SIZE,
-                         **mapfl_params
+                         **kwargs
                          ) -> Traces:
     """
     Run backward tracing using TracerMP.
@@ -78,8 +96,8 @@ def run_backward_tracing(br: PathType,
         Launch points used by the tracer. If None, default launch points will be used.
     buffer_size : int
         Buffer size for trace geometry. Default is 2000.
-    mapfl_params : dict
-        Additional keyword arguments to be passed to the `TracerMP` initialization.
+    kwargs : dict
+        Additional keyword arguments to be passed to the :any:`TracerMP` initialization.
 
     Returns
     -------
@@ -87,7 +105,7 @@ def run_backward_tracing(br: PathType,
         A `Traces` object containing the results of the backward tracing.
 
     """
-    with TracerMP(br, bt, bp, **mapfl_params) as tracer:
+    with TracerMP(br, bt, bp, **kwargs) as tracer:
         return tracer.trace_bwd(launch_points, buffer_size)
 
 
@@ -96,7 +114,7 @@ def run_fwdbwd_tracing(br: PathType,
                        bp: PathType,
                        launch_points: Optional[Iterable[float]] = None,
                        buffer_size: int = DEFAULT_BUFFER_SIZE,
-                       **mapfl_params
+                       **kwargs
                        ) -> Traces:
     """
     Run forward and backward tracing using TracerMP.
@@ -118,8 +136,8 @@ def run_fwdbwd_tracing(br: PathType,
         Launch points used by the tracer. If None, default launch points will be used.
     buffer_size : int
         Buffer size for trace geometry. Default is 2000.
-    mapfl_params : dict
-        Additional keyword arguments to be passed to the `TracerMP` initialization.
+    kwargs : dict
+        Additional keyword arguments to be passed to the :any:`TracerMP` initialization.
 
     Returns
     -------
@@ -127,7 +145,7 @@ def run_fwdbwd_tracing(br: PathType,
         A `Traces` object containing the results of the forward tracing.
 
     """
-    with TracerMP(br, bt, bp, **mapfl_params) as tracer:
+    with TracerMP(br, bt, bp, **kwargs) as tracer:
         return tracer.trace_fbwd(launch_points, buffer_size)
 
 
@@ -219,7 +237,7 @@ def inter_domain_tracing(br_cor: PathType,
             lp = np.array(launch_points, dtype=float).reshape((3, -1))
         case _:
             raise ValueError(f"Invalid launch points type: {type(launch_points)}. "
-                                "Expected None, int, or Iterable of launch points.")
+                             "Expected None, int, or Iterable of launch points.")
     # prepare the final arrays
     n_lp = lp.shape[1]
     final_traces = [None] * n_lp
@@ -244,7 +262,8 @@ def inter_domain_tracing(br_cor: PathType,
         traces_cor_bwd, bndry_cor_bwd, recross_cor_bwd = inter_cor(direction='b')
 
         # join the traces, flipping the backwards trace after dropping its first point (first point is the starting point)
-        traces_cor = [np.concatenate((np.flip(traces_cor_bwd[i][:, 1:], axis=1), traces_cor_fwd[i]), axis=1)
+        traces_cor = [np.concatenate((np.flip(traces_cor_bwd[i][:, 1:], axis=1),
+                                      traces_cor_fwd[i]), axis=1)
                       for i in range(len(traces_cor_bwd))]
 
         # combine the tracing flags
@@ -267,7 +286,8 @@ def inter_domain_tracing(br_cor: PathType,
         traces_hel_bwd, bndry_hel_bwd, recross_hel_bwd = inter_hel(direction='b')
 
         # join the traces, flipping the backwards trace after dropping its first point (first point is the starting point)
-        traces_hel = [np.concatenate((np.flip(traces_hel_bwd[i][:, 1:], axis=1), traces_hel_fwd[i]), axis=1)
+        traces_hel = [np.concatenate((np.flip(traces_hel_bwd[i][:, 1:], axis=1),
+                                      traces_hel_fwd[i]), axis=1)
                       for i in range(len(traces_hel_bwd))]
 
         # combine the tracing flags
@@ -372,7 +392,8 @@ def _inter_domain_tracing_from_cor(cor_tracer: TracerMP,
         traced_to_boundary[midboundary_mask] = traces_.traced_to_boundary
 
         # update the radial end positions (SHIFTED BACK!)
-        radial_end_pos[:, midboundary_mask] = shift_phi_lps(np.copy(traces_.end_pos), -helio_shift)
+        radial_end_pos[:,
+        midboundary_mask] = shift_phi_lps(np.copy(traces_.end_pos), -helio_shift)
 
         # update the flag for traces that hit the interface
         midboundary_mask = np.isclose(radial_end_pos[0, :], r_interface, rtol=rtol)
@@ -385,8 +406,9 @@ def _inter_domain_tracing_from_cor(cor_tracer: TracerMP,
             cor_lps = radial_end_pos[:, midboundary_mask]
             cor_tracer.set_tracing_direction('b')
             traces_ = cor_tracer.trace(cor_lps, buffer)
-            
-            temp_traces = list([arr[:, ~np.isnan(arr).any(axis=0)] for arr in traces_.geometry.T])
+
+            temp_traces = list([arr[:, ~np.isnan(arr).any(axis=0)] for arr in
+                                traces_.geometry.T])
             for i, trace in zip(np.where(midboundary_mask)[0], temp_traces):
                 final_traces[i] = np.concatenate([final_traces[i], trace[:, 1:]], axis=1)
 
@@ -507,7 +529,8 @@ def _inter_domain_tracing_from_hel(cor_tracer: TracerMP,
             hel_tracer.set_tracing_direction('f')
             traces_ = hel_tracer.trace(hel_lps, buffer)
 
-            temp_traces = list([arr[:, ~np.isnan(arr).any(axis=0)] for arr in traces_.geometry.T])
+            temp_traces = list([arr[:, ~np.isnan(arr).any(axis=0)] for arr in
+                                traces_.geometry.T])
 
             # shift these traces BACK to the coronal/carrington frame
             temp_traces = shift_phi_traces(temp_traces, -helio_shift)
@@ -518,7 +541,8 @@ def _inter_domain_tracing_from_hel(cor_tracer: TracerMP,
 
             # check the trace, update the end positions (SHIFTED BACK!) and the midboundary flag, continue the loop
             traced_to_boundary[midboundary_mask] = traces_.traced_to_boundary
-            radial_end_pos[:, midboundary_mask] = shift_phi_lps(np.copy(traces_.end_pos), -helio_shift)
+            radial_end_pos[:,
+            midboundary_mask] = shift_phi_lps(np.copy(traces_.end_pos), -helio_shift)
             midboundary_mask = np.isclose(radial_end_pos[0, :], r_interface, rtol=rtol)
             boundary_recross |= midboundary_mask
 

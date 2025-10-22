@@ -1,7 +1,7 @@
 import pytest
 from numpy.testing import assert_allclose
 
-from mapflpy._typing import Traces
+from mapflpy.typing import Traces
 
 
 def test_run_without_setting_fields(tracer_instance):
