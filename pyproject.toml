@@ -10,7 +10,7 @@ requires = [
 
 [project]
 name = "mapflpy"
-version = "1.0.2"
+version = "1.1.0"
 description = "Python extension for tracing field lines using the Fortran tracer from MapFL"
 authors = [
   {name = "Predictive Science Inc.", email = "webmaster@predsci.com"},
@@ -60,3 +60,6 @@ dev = ["mapflpy[hdf4,test,docs]"]
 
 [tool.setuptools.packages.find]
 exclude = ["src","local_testing","bbdir"]
+
+[tool.meson-python.sdist]
+include = ["tests/**", "README.*", "LICENSE*"]

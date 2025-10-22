@@ -30,20 +30,22 @@ dependencies:
   - pyhdf
   - scipy
 
-  # Documentation Dependencies
-  - sphinx
-  - sphinx-book-theme
-  - sphinx-toolbox
-  - sphinx-gallery
-  - matplotlib
+#  # Documentation Dependencies
+#  - sphinx
+#  - sphinx-book-theme
+#  - sphinx-gallery
+#  - matplotlib
+#  - pooch
 
-  # Development Dependencies
+  # Testing Dependencies
+  - pytest
+
+  # Build Dependencies
   - meson~=1.8.0
   - meson-python~=0.18.0
   - ninja
   - pkg-config
   - gfortran~=13.0
-  - pytest
   - python-build
   - delocate
   - auditwheel

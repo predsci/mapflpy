@@ -8,7 +8,8 @@
 #
 # -----------------------------------------------------------------------------
 
-project('mapflpy',
+project(
+  'mapflpy',
   ['c', 'fortran'],
   license: 'Apache-2.0',
   meson_version: '>= 1.1.0',
@@ -138,31 +139,12 @@ py.install_sources([
   subdir: 'mapflpy/fortran'
 )
 
-# install test python files
-py.install_sources([
-  'tests/__init__.py',
-  'tests/conftest.py',
-  'tests/test_module.py',
-  'tests/utils.py',
-  'tests/test_tracer/test_class_primitives.py',
-  'tests/test_tracer/test_fortran_calls.py',
-  'tests/test_tracer/test_param_editing.py',
-  'tests/test_tracer/test_trace_routines.py',
-  'tests/test_tracermp/test_class_primitives_.py',
-  'tests/test_tracermp/test_fortran_calls_.py',
-  'tests/test_tracermp/test_param_editing_.py',
-  'tests/test_tracermp/test_trace_routines_.py',
-  ],
-  subdir: 'tests'
-)
+pytest = find_program('pytest', required: true)
 
-# install test data files
-py.install_sources([
-  'tests/data/defaults.json',
-  'tests/data/reference_traces.npz',
-  ],
-  subdir: 'tests/data'
-)
+# Make sure Python can import your package built artifacts during tests
+env = environment()
+# If your package lives at repo root; adjust if using src/ layout
+env.set('PYTHONPATH', [meson.current_source_dir(), meson.project_build_root()])
 
-
+test('pytest', pytest, args: ['-q'], env: env, workdir: meson.project_source_root())
 
