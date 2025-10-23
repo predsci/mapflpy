@@ -1,6 +1,6 @@
 import pytest
 
-from mapflpy.typing import Traces
+from mapflpy.globals import Traces
 
 
 def test_run_without_setting_fields(tracermp_instance):

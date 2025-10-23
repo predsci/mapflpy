@@ -191,7 +191,7 @@ def TracerMP(tracer_cls):
 
 @pytest.fixture
 def defaults():
-    from mapflpy.typing import DEFAULT_PARAMS, DEFAULT_FIELDS, MAGNETIC_FIELD_PATHS
+    from mapflpy.globals import DEFAULT_PARAMS, DEFAULT_FIELDS, MAGNETIC_FIELD_PATHS
     return DEFAULT_PARAMS, DEFAULT_FIELDS, MAGNETIC_FIELD_PATHS
 
 
