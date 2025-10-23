@@ -19,7 +19,7 @@ from typing import Optional, Iterable, Tuple
 import numpy as np
 from numpy._typing import NDArray
 
-from mapflpy.typing import DEFAULT_BUFFER_SIZE, Traces, PathType, DirectionType
+from mapflpy.globals import DEFAULT_BUFFER_SIZE, Traces, PathType, DirectionType
 from mapflpy.tracer import TracerMP
 from mapflpy.utils import shift_phi_traces, shift_phi_lps, fetch_default_launch_points, combine_fwd_bwd_traces
 

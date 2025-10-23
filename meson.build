@@ -124,7 +124,8 @@ py.extension_module('mapflpy_fortran',
 # install main python files
 py.install_sources([
   'mapflpy/__init__.py',
-  'mapflpy/typing.py',
+  'mapflpy/data.py',
+  'mapflpy/globals.py',
   'mapflpy/scripts.py',
   'mapflpy/tracer.py',
   'mapflpy/utils.py',
@@ -139,12 +140,4 @@ py.install_sources([
   subdir: 'mapflpy/fortran'
 )
 
-pytest = find_program('pytest', required: true)
-
-# Make sure Python can import your package built artifacts during tests
-env = environment()
-# If your package lives at repo root; adjust if using src/ layout
-env.set('PYTHONPATH', [meson.current_source_dir(), meson.project_build_root()])
-
-test('pytest', pytest, args: ['-q'], env: env, workdir: meson.project_source_root())
 

@@ -31,7 +31,7 @@ from numpy._typing import NDArray
 
 from psi_io import read_hdf_by_value
 
-from mapflpy.typing import (
+from mapflpy.globals import (
     DEFAULT_PARAMS,
     DEFAULT_FIELDS,
     MAGNETIC_FIELD_LABEL,

@@ -13,7 +13,7 @@ import numpy as np
 from numpy._typing import NDArray
 from psi_io import interpolate_positions_from_hdf
 
-from mapflpy.typing import Traces, Polarity, ArrayType, PathType
+from mapflpy.globals import Traces, Polarity, ArrayType, PathType
 
 __all__ = [
     'shift_phi_lps',
@@ -522,25 +522,3 @@ def plot_sphere(values, r, t, p, ax=None):
     ax.view_init(elev=20, azim=45)
 
     return ax
-
-
-MagneticFieldFiles = namedtuple("MagneticFieldFiles", ("br", "bt", "bp"))
-
-
-def _fetch_magnetic_field_files(domain: Literal['cor', 'hel']) -> tuple[Path, Path, Path]:
-    in_sphinx = (
-        "SPHINX_GALLERY_CONF_DIR" in os.environ
-        or "SPHINX_GALLERY_BUILD" in os.environ
-        or "READTHEDOCS" in os.environ
-    )
-    print(in_sphinx)
-    ASSETS = Path(__file__).resolve().parents[1] / "docs" / "source" / "_static" / "assets"
-
-    if not in_sphinx:
-        import matplotlib
-        matplotlib.use('TkAgg')
-    return MagneticFieldFiles(
-        ASSETS / f"2143-mast2-{domain}" / "br002.h5",
-        ASSETS / f"2143-mast2-{domain}" / "bt002.h5",
-        ASSETS/ f"2143-mast2-{domain}" / "bp002.h5"
-    )

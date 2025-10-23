@@ -59,4 +59,4 @@ docs = [
 dev = ["mapflpy[hdf4,test,docs]"]
 
 [tool.setuptools.packages.find]
-exclude = ["src","tests", "docs"]
+exclude = ["src","tests","docs"]
