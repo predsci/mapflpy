@@ -1,12 +1,11 @@
 User Guide
 ==========
 
+To get started with **mapflpy**, please refer to the following sections:
+
 .. toctree::
-    :hidden:
 
-    installation
-    dependencies
-    getting_started
+   installation
+   overview
 
 
-For a more general description of our API

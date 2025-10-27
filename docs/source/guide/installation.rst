@@ -1,3 +1,5 @@
+.. _installation:
+
 Installation
 ============
 
@@ -23,7 +25,7 @@ or
 
     pip install git+https://github.com/predsci/mapflpy.git
 
-**Make sure that you have ``git`` installed and configured on your system to use either of the above methods.**
+**Ensure that you have** ``git`` **installed and configured on your system to use either of the above methods.**
 
 Required Dependencies
 ----------------------
@@ -37,6 +39,7 @@ Optional Dependencies
 ----------------------
 - `pyhdf <https://github.com/fhs/pyhdf>`_
 - `matplotlib <https://matplotlib.org/>`_
+- `pooch <https://www.fatiando.org/pooch/>`_
 
 Sample Conda Environment
 ------------------------
@@ -53,12 +56,13 @@ Sample Conda Environment
       - gfortran
       - pyhdf
       - matplotlib
+      - pooch
       - pip
       - pip:
         - psi-io
         - mapflpy @ git+ssh://git@github.com/predsci/mapflpy.git
 
-This environment can be to a file named `environment.yml` and created using the following command:
+This environment can be written to a file, named `environment.yml`, and created using the following command:
 
 .. code-block:: bash
 

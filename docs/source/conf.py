@@ -364,7 +364,8 @@ sort_members = True
 exclusions = ['\\._abc_impl',
               'mapflpy.fortran',
               '_load_array_to_shared_memory',
-              'scripts._.*'
+              'scripts._.*',
+              'data\\.[A-Z_]*$'
               ]
 
 exclusions.extend(_get_base_exclusions(exclude_private, exclude_tests, exclude_dunder))
@@ -400,18 +401,20 @@ extensions.append('sphinx.ext.napoleon')
 napoleon_use_ivar = True
 napoleon_preprocess_types = True
 napoleon_type_aliases = {
-    "NumberType": "~mapflpy.typing.NumberType",
-    "PathType": "~mapflpy.typing.PathType",
-    "ArrayType": "~mapflpy.typing.ArrayType",
-    "MagneticFieldArrayType": "~mapflpy.typing.MagneticFieldArrayType",
-    "DirectionType": "~mapflpy.typing.DirectionType",
-    "MagneticFieldLabelType": "~mapflpy.typing.MagneticFieldLabelType",
-    "ContextType": "~mapflpy.typing.ContextType",
-    "Traces": "~mapflpy.typing.Traces",
-    "Polarity": "~mapflpy.typing.Polarity",
+    "NumberType": "~mapflpy.globals.NumberType",
+    "PathType": "~mapflpy.globals.PathType",
+    "ArrayType": "~mapflpy.globals.ArrayType",
+    "MagneticFieldArrayType": "~mapflpy.globals.MagneticFieldArrayType",
+    "DirectionType": "~mapflpy.globals.DirectionType",
+    "MagneticFieldLabelType": "~mapflpy.globals.MagneticFieldLabelType",
+    "ContextType": "~mapflpy.globals.ContextType",
+    "Traces": "~mapflpy.globals.Traces",
+    "Polarity": "~mapflpy.globals.Polarity",
+    "MagneticFieldFiles": "~mapflpy.data.MagneticFieldFiles",
     "ndarray": "~numpy.ndarray",
     "ChainMap": "~collections.ChainMap",
     "Callable": "~collections.abc.Callable",
+    "MutableMapping": "~collections.abc.MutableMapping",
 }
 
 # ------------------------------------------------------------------------------
@@ -438,6 +441,10 @@ intersphinx_mapping = {
     "matplotlib": (
         "https://matplotlib.org/stable/",
         (INV / "matplotlib-objects.inv").as_posix(),
+    ),
+    "pooch": (
+        "https://www.fatiando.org/pooch/latest/",
+        (INV / "pooch-objects.inv").as_posix(),
     ),
 }
 
