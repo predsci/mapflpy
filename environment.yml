@@ -30,12 +30,12 @@ dependencies:
   - pyhdf
   - scipy
 
-#  # Documentation Dependencies
-#  - sphinx
-#  - sphinx-book-theme
-#  - sphinx-gallery
-#  - matplotlib
-#  - pooch
+  # Documentation Dependencies
+  - sphinx
+  - sphinx-book-theme
+  - sphinx-gallery
+  - matplotlib
+  - pooch
 
   # Testing Dependencies
   - pytest
