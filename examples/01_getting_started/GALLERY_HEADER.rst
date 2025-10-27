@@ -9,4 +9,3 @@ subclasses.
 
 These examples – and the the corresponding functions in :mod:`~mapflpy.scripts` – are suitable
 for most common use cases, and can be used as a starting point for more complex applications.
-
