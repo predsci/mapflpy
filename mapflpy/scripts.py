@@ -24,20 +24,20 @@ from mapflpy.tracer import TracerMP
 from mapflpy.utils import shift_phi_traces, shift_phi_lps, fetch_default_launch_points, combine_fwd_bwd_traces
 
 __all__ = [
-    "run_foward_tracing",
+    "run_forward_tracing",
     "run_backward_tracing",
     "run_fwdbwd_tracing",
     "inter_domain_tracing"
 ]
 
 
-def run_foward_tracing(br: PathType,
-                       bt: PathType,
-                       bp: PathType,
-                       launch_points: Optional[Iterable[float]] = None,
-                       buffer_size: int = DEFAULT_BUFFER_SIZE,
-                       **kwargs
-                       ) -> Traces:
+def run_forward_tracing(br: PathType,
+                        bt: PathType,
+                        bp: PathType,
+                        launch_points: Optional[Iterable[float]] = None,
+                        buffer_size: int = DEFAULT_BUFFER_SIZE,
+                        **kwargs
+                        ) -> Traces:
     """
     Run forward tracing using TracerMP.
 
@@ -228,7 +228,7 @@ def inter_domain_tracing(br_cor: PathType,
     match launch_points:
         case None:
             # if no launch points are provided, use the default launch points
-            lp = fetch_default_launch_points(128)
+            lp = fetch_default_launch_points()
         case int():
             # if an integer is provided, use that many default launch points
             lp = fetch_default_launch_points(launch_points)

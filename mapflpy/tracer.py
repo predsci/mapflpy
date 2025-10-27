@@ -930,10 +930,10 @@ class TracerMP(_Tracer):
     bp : PathType, optional
         Path to the Bp magnetic field file.
     timeout : float, optional
-        Timeout in seconds for interprocess communication. Default is 10 seconds.
+        Timeout in seconds for interprocess communication. Default is 30 seconds.
     context : ContextType, optional
         The multiprocessing context to use when spawning the subprocess.
-        Default is 'fork'. Note that 'fork' is not available on Windows.
+        Default is 'spawn'.
     **mapfl_params : dict
         Additional tracing parameters passed to the subprocess.
 

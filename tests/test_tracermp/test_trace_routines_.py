@@ -1,7 +1,7 @@
 import pytest
 from numpy.testing import assert_allclose
 
-from mapflpy.scripts import run_foward_tracing, run_backward_tracing, run_fwdbwd_tracing, inter_domain_tracing
+from mapflpy.scripts import run_forward_tracing, run_backward_tracing, run_fwdbwd_tracing, inter_domain_tracing
 from tests.utils import compute_fieldline_length, compute_weighted_fieldline_difference
 from mapflpy.utils import trim_fieldline_nan_buffer, combine_fwd_bwd_traces
 
@@ -43,7 +43,7 @@ def test_tracing_scripts_against_reference_traces(mesh_fields_aspaths, launch_po
 
     match lps_id:
         case 'fwd':
-            traces = run_foward_tracing(br, bt, bp, lps, buffer_size=default_params['lps']['BUFFER'])
+            traces = run_forward_tracing(br, bt, bp, lps, buffer_size=default_params['lps']['BUFFER'])
         case 'bwd':
             traces = run_backward_tracing(br, bt, bp, lps, buffer_size=default_params['lps']['BUFFER'])
         case 'both':

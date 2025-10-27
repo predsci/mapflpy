@@ -428,7 +428,9 @@ def s2c(r, t, p):
     return x, y, z
 
 
-def plot_traces(*iargs, ax=None):
+def plot_traces(*iargs,
+                ax=None,
+                **kwargs):
     """
     Quick and dirty 3D plot of fieldlines using matplotlib.
 
@@ -448,29 +450,29 @@ def plot_traces(*iargs, ax=None):
     from mpl_toolkits.mplot3d.art3d import Line3DCollection
     if ax is None:
         import matplotlib.pyplot as plt
-        ax = plt.figure().add_subplot(111, projection='3d')
+        ax = plt.figure().add_subplot(projection='3d')
 
     for traces in iargs:
         fls = traces.geometry if isinstance(traces, Traces) else traces
-        x, y, z = s2c(fls[:, 0, :], fls[:, 1, :], fls[:, 2, :])
-        x, y, z = x.T, y.T, z.T
+        if fls.ndim == 3:
+            x, y, z = s2c(fls[:, 0, :], fls[:, 1, :], fls[:, 2, :])
+            x, y, z = x.T, y.T, z.T
 
-        segments = [np.column_stack([x[i], y[i], z[i]]) for i in range(x.shape[0])]
+            segments = [np.column_stack([x[i], y[i], z[i]]) for i in range(x.shape[0])]
 
-        # Choose colormap
-        colors = matplotlib.colormaps['hsv'](np.random.random_sample(len(segments)))
+            # Choose colormap
+            colors = matplotlib.colormaps['hsv'](np.random.random_sample(len(segments)))
 
-        lc = Line3DCollection(segments, colors=colors, linewidths=1.0)
-        ax.add_collection3d(lc)
-
-    ax.set_xlim3d(-5, 5)
-    ax.set_ylim3d(-5, 5)
-    ax.set_zlim3d(-5, 5)
+            lc = Line3DCollection(segments, linewidths=1.0, **kwargs)
+            ax.add_collection3d(lc)
+        else:
+            x, y, z = s2c(fls[0, :], fls[1, :], fls[2, :])
+            ax.plot3D(x, y, z)
 
     return ax
 
 
-def plot_sphere(values, r, t, p, ax=None):
+def plot_sphere(values, r, t, p, clim=None, ax=None):
     """
     Quick and dirty 3D plot of a spherical surface using matplotlib.
 
@@ -494,7 +496,7 @@ def plot_sphere(values, r, t, p, ax=None):
     import matplotlib
     if ax is None:
         import matplotlib.pyplot as plt
-        ax = plt.figure().add_subplot(111, projection='3d')
+        ax = plt.figure().add_subplot(projection='3d')
 
     # Create a meshgrid for theta and phi
     T, P = np.meshgrid(t, p, indexing='ij')
@@ -502,23 +504,16 @@ def plot_sphere(values, r, t, p, ax=None):
     # Convert spherical to Cartesian coordinates
     X, Y, Z = s2c(r, T, P)
 
+    cmin = clim[0] if clim is not None else values.min()
+    cmax = clim[1] if clim is not None else values.max()
+
     # Plot the surface with the provided values as color mapping
     # Plot sphere surface with colormap
     surf = ax.plot_surface(
         X, Y, Z,
-        facecolors=matplotlib.colormaps['seismic']((values - values.min()) / (values.max() - values.min())),
+        facecolors=matplotlib.colormaps['seismic']((values - cmin) / (cmax - cmin)),
         rstride=1, cstride=1,
         linewidth=0, antialiased=False, shade=False
     )
-
-    # Set equal aspect ratio and turn off axes
-    ax.set_box_aspect([1, 1, 1])
-    ax.set_axis_off()
-
-    # Set orthographic projection
-    # ax.set_proj_type("ortho")
-
-    # Set camera view
-    ax.view_init(elev=20, azim=45)
 
     return ax

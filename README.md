@@ -291,19 +291,19 @@ to these scripts are passed to the instantiation of the `TracerMP` class, *i.e.*
 arguments used to set the mapfl parameters.
 
 ```python
-from mapflpy.scripts import run_foward_tracing
+from mapflpy.scripts import run_forward_tracing
 
-lps = [ ... ]
+lps = [...]
 bfiles = {
     'br': 'br_file.h5',
     'bt': 'bt_file.h5',
     'bp': 'bp_file.h5'
 }
-traces = run_foward_tracing(
+traces = run_forward_tracing(
     **bfiles,
     launch_points=lps,  # <-- passed to trace() method
-    buffer_size=1000,   # <-- passed to trace() method
-    domain_r_max_=100   # <-- example of passing mapfl parameter
+    buffer_size=1000,  # <-- passed to trace() method
+    domain_r_max_=100  # <-- example of passing mapfl parameter
 )
 ```
 
