@@ -1,16 +1,14 @@
 [build-system]
 build-backend = 'mesonpy'
 requires = [
-  "numpy",
-  "h5py",
-  "meson-python",
-  "meson",
-  "tomli",
+  "numpy>=2.1.0",
+  "h5py>=3.15.0",
+  "meson-python>=0.15.0",
 ]
 
 [project]
 name = "mapflpy"
-version = "1.1.0"
+dynamic = ["version"]
 description = "Python extension for tracing field lines using the Fortran tracer from MapFL"
 authors = [
   {name = "Predictive Science Inc.", email = "webmaster@predsci.com"},
@@ -22,8 +20,9 @@ authors = [
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE.txt"]
-keywords = ["solar physics", "space physics", "heliophysics", "solar", "sun",
-  "science", "magnetohydrodynamic", "mas", "predsci", "psi"]
+keywords = [
+  "solar physics", "space physics", "heliophysics", "magnetohydrodynamic", "science",
+  "mas", "predsci", "psi", "modeling", "fortran"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Science/Research",
@@ -35,28 +34,51 @@ classifiers = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-  "numpy",
-  "h5py",
-  "psi-io",
+  "numpy>=2.1.0",
+  "h5py>=3.15.0",
+  "psi-io>=1.0.0",
 ]
 
 [project.urls]
-Homepage = "https://pypi.org/project/mapflpy"
-Repository = "https://github.com/predsci/mapflpy"
+homepage = "https://predsci.com/"
+documentation = "https://predsci.com/docs/mapflpy"
+repository = "https://github.com/predsci/mapflpy"
 
 [project.optional-dependencies]
-hdf4 = [
-    "pyhdf",
-]
-test = [
-    "pytest",
-]
-docs = [
-  "sphinx",
-  "sphinx-book-theme",
-  "sphinx-gallery"
-]
-dev = ["mapflpy[hdf4,test,docs]"]
+hdf4 = ["pyhdf>=0.11.6"]
+interp = ["scipy"]
+tests = ["pytest>=8.4.0", "ruff>=0.11.7", "mypy>=1.15"]
+docs = ["sphinx==8.2.3", "sphinx-book-theme==1.1.4", "sphinx-gallery==0.19.0", "pooch==1.8.2", "matplotlib==3.10.7"]
+dev = ["mapflpy[hdf4,tests,docs,interp]"]
 
 [tool.setuptools.packages.find]
-exclude = ["src","tests","docs"]
+include = ["mapflpy", "mapflpy.*"]
+exclude = ["tests","docs","examples","src"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = "-rA -v"
+
+[tool.mypy]
+python_version = "3.12"
+files = ["mapflpy", "tests"]
+strict = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "mapflpy.*"
+ignore_missing_imports = false
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["docs/_build", ".tox", ".mypy_cache", ".ruff_cache"]
+
+[tool.ruff.lint]
+select = ["E","F","W","I","N","B","UP","SIM"]
+ignore = ["E203","E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

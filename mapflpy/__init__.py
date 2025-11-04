@@ -7,26 +7,15 @@ allow users a high-level interface to the underlying Fortran routines, as well a
 visualizing and analyzing the traced fieldlines.
 """
 
-
-from __future__ import annotations
-
-import os
-from importlib.metadata import version, PackageNotFoundError
-
-__version__ = "0.0.0"
+# mapflpy/__init__.py
 try:
-    __version__ = version("mapflpy")
-except PackageNotFoundError:
-    from pathlib import Path
+    # If Meson generated this file:
+    from ._version import __version__  # type: ignore[attr-defined]
+except Exception:
     try:
-        import tomllib
-    except ModuleNotFoundError:
-        import tomli as tomllib
+        # Fallback to installed metadata (wheel/sdist)
+        from importlib.metadata import version as _pkg_version
+        __version__ = _pkg_version("mapflpy")  # type: ignore[assignment]
+    except Exception:  # dev/editable without metadata
+        __version__ = "0+unknown"  # type: ignore[assignment]
 
-    try:
-        data = tomllib.loads(
-            (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text(encoding="utf-8")
-        )
-        __version__ = data["project"]["version"]
-    except Exception:
-        pass

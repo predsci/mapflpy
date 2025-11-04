@@ -1,56 +1,51 @@
-# mapflpy requires HDF libraries for reading data with psi-io.
-# it also requires the HDF5 library to build the fortran object from source.
-#
-# Generally we recommend installing the python HDF packages using conda.
-# This makes it simpler to ensure that the underlying HDF5 and HDF4 libraries
-# are properly set up and linked to the python interfaces.
-#
-# Here is a minimal conda recipe for the mapflpy dependencies that are
-# currently required to build the project. If you only wish to pip install
-# the project, you can remove everything past the minimal dependencies.
-#
-# To create the development environment:
-#   $ conda env create -f environment.yml
-#   $ conda activate mapflpy-dev
-#
-# To remove the development environment:
-#   $ conda remove --name mapflpy-dev --all
-#
 name: mapflpy-dev
 channels:
   - conda-forge
-  - defaults
+
 dependencies:
-  # Minimal Dependencies (manually set python 3.12 here, but it should be ok with >=3.10)
-  - python~=3.12.0
-  - h5py
-  - numpy
+  # -------- Core Python --------
+  - python=3.12
+  - pip
+  - wheel
 
-  # Optional Dependencies
-  - pyhdf
-  - scipy
+  # -------- Build toolchain (Meson + compilers) --------
+  - meson>=1.4
+  - meson-python>=0.15
+  - ninja>=1.11
+  - pkg-config
+  - c-compiler
+  - cxx-compiler
+  - fortran-compiler
+  - python-build
 
-  # Documentation Dependencies
+  # (Enable OpenMP only if you use it in your code)
+  # - llvm-openmp        # macOS
+  # - libgomp            # Linux
+
+  # -------- Numeric / IO (build + runtime) --------
+  - numpy               # headers needed at build; runtime too
+  - hdf5                # C/Fortran libs you link against
+  - h5py                # Python bindings (runtime)
+  - scipy               # (optional) your "interp" extra
+  - pyhdf               # (optional) your "hdf4" extra
+
+  # -------- Testing / QA --------
+  - pytest
+  - pytest-cov
+  - mypy
+  - ruff
+  - coverage
+  - nox
+
+  # -------- Docs --------
   - sphinx
   - sphinx-book-theme
   - sphinx-gallery
   - matplotlib
   - pooch
 
-  # Testing Dependencies
-  - pytest
-
-  # Build Dependencies
-  - meson~=1.8.0
-  - meson-python~=0.18.0
-  - ninja
-  - pkg-config
-  - gfortran~=13.0
-  - python-build
-  - delocate
-  - auditwheel
+  # -------- Publish (optional; keep if you actually upload) --------
   - twine
-  - pip
 
   - pip:
-    - psi-io
+      - psi-io
