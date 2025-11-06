@@ -1,9 +1,10 @@
 [build-system]
 build-backend = 'mesonpy'
 requires = [
-  "numpy>=2.1.0",
+  "numpy>=2.0.0",
   "h5py>=3.15.0",
-  "meson-python>=0.15.0",
+  "meson-python>=0.13.1",
+  "ninja>=1.8.2"
 ]
 
 [project]
@@ -47,7 +48,10 @@ repository = "https://github.com/predsci/mapflpy"
 [project.optional-dependencies]
 hdf4 = ["pyhdf>=0.11.6"]
 interp = ["scipy"]
-tests = ["pytest>=8.4.0", "ruff>=0.11.7", "mypy>=1.15"]
+build = ["python-build"]
+test = ["pytest>=8.4.0", "pytest-cov"]
+types = ["mypy>=1.15"]
+lint = ["ruff>=0.11.7"]
 docs = ["sphinx==8.2.3", "sphinx-book-theme==1.1.4", "sphinx-gallery==0.19.0", "pooch==1.8.2", "matplotlib==3.10.7"]
 dev = ["mapflpy[hdf4,tests,docs,interp]"]
 
@@ -62,9 +66,9 @@ addopts = "-rA -v"
 
 [tool.mypy]
 python_version = "3.12"
-files = ["mapflpy", "tests"]
 strict = true
 ignore_missing_imports = true
+files = ["mapflpy"]
 
 [[tool.mypy.overrides]]
 module = "mapflpy.*"
@@ -77,8 +81,11 @@ extend-exclude = ["docs/_build", ".tox", ".mypy_cache", ".ruff_cache"]
 
 [tool.ruff.lint]
 select = ["E","F","W","I","N","B","UP","SIM"]
-ignore = ["E203","E501"]
+ignore = ["E203","E501", "F841"]
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+[tool.mapflpy]
+conda = ["c-compiler", "cxx-compiler", "fortran-compiler", "pkg-config", "hdf5"]

@@ -39,6 +39,7 @@ pip-wheel-metadata/
 wheels/
 share/python-wheels/
 .installed.cfg
+.nox
 MANIFEST
 
 # ─────────────────────────────────────────────────────────────────────────────
