@@ -46,26 +46,82 @@ documentation = "https://predsci.com/docs/mapflpy"
 repository = "https://github.com/predsci/mapflpy"
 
 [project.optional-dependencies]
-hdf4 = ["pyhdf>=0.11.6"]
-interp = ["scipy"]
-build = ["python-build"]
-test = ["pytest>=8.4.0", "pytest-cov"]
-types = ["mypy>=1.15"]
-lint = ["ruff>=0.11.7"]
-docs = ["sphinx==8.2.3", "sphinx-book-theme==1.1.4", "sphinx-gallery==0.19.0", "pooch==1.8.2", "matplotlib==3.10.7"]
-dev = ["mapflpy[hdf4,tests,docs,interp]"]
+hdf4 = [
+  "pyhdf>=0.11.6"
+]
+data = [
+  "pooch==1.8.2",
+  "matplotlib==3.10.7",
+  "scipy"
+]
+build = [
+  "python-build"
+]
+test = [
+  "pytest>=8.4.0",
+  "pytest-cov"
+]
+types = [
+  "mypy>=1.15"
+]
+lint = [
+  "ruff>=0.11.7"
+]
+docs = [
+  "sphinx==8.2.3",
+  "sphinx-book-theme==1.1.4",
+  "sphinx-gallery==0.19.0",
+  "pooch==1.8.2",
+  "matplotlib==3.10.7",
+  "scipy"
+]
 
 [tool.setuptools.packages.find]
-include = ["mapflpy", "mapflpy.*"]
-exclude = ["tests","docs","examples","src"]
+include = [
+  "mapflpy",
+  "mapflpy.*"
+]
+exclude = [
+  "tests",
+  "docs",
+  "examples",
+  "src"
+]
 
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
-addopts = "-rA -v"
+addopts = [
+  "-ra",
+  "--cov=mapflpy",
+  "--cov-report=term-missing",
+  "--maxfail=1",
+  "--import-mode=importlib",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["mapflpy"]
+parallel = true
+relative_files = true
+omit = [
+  "tests/*",
+  "docs/_build/*",
+  "*/_version.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_lines = [
+  "pragma: no cover",
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+  "def __repr__",
+]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.13"
 strict = true
 ignore_missing_imports = true
 files = ["mapflpy"]
@@ -75,17 +131,52 @@ module = "mapflpy.*"
 ignore_missing_imports = false
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py313"
 line-length = 100
-extend-exclude = ["docs/_build", ".tox", ".mypy_cache", ".ruff_cache"]
+src = ["mapflpy"]
+extend-exclude = [
+  "docs",
+  ".nox",
+  ".mypy_cache",
+  ".ruff_cache",
+  ".pytest_cache",
+  "src",
+  "tests"
+]
 
 [tool.ruff.lint]
-select = ["E","F","W","I","N","B","UP","SIM"]
-ignore = ["E203","E501", "F841"]
+select = [
+  "E",
+  "F",
+  "W",
+  "I",
+  "N",
+  "B",
+  "UP",
+  "SIM"
+]
+ignore = [
+  "E203",
+  "E501",
+  "F841"
+]
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
 
+[tool.sphinx_build]
+addopts = [
+  "-b", "html",
+  "-a",
+  "-E"
+]
+
 [tool.mapflpy]
-conda = ["c-compiler", "cxx-compiler", "fortran-compiler", "pkg-config", "hdf5"]
+conda = [
+  "c-compiler",
+  "cxx-compiler",
+  "fortran-compiler",
+  "pkg-config",
+  "hdf5"
+]
