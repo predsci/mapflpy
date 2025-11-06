@@ -16,7 +16,7 @@ from typing import Iterable
 
 from sphinx_gallery.sorting import ExplicitOrder
 
-sys.path.insert(0, Path(__file__).resolve().parents[2].as_posix())
+# sys.path.insert(0, Path(__file__).resolve().parents[2].as_posix())
 import mapflpy
 
 
@@ -465,5 +465,6 @@ sphinx_gallery_conf = {
     "remove_config_comments": True,
     "filename_pattern": r"\.py$",
     "plot_gallery": True,
+    "run_stale_examples": True,
     "matplotlib_animations": True,
 }

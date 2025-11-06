@@ -7,12 +7,14 @@ Perform combined forward-backward tracing of magnetic field lines.
 This example demonstrates how to use the :func:`~mapflpy.scripts.run_fwdbwd_tracing`
 function to trace magnetic field lines forward from a set of user-defined starting points.
 """
+# sphinx_gallery_start_ignore
 import os
 CONTEXT = 'spawn'
 if 'SPHINX_GALLERY_BUILD' not in os.environ:
     import matplotlib
     matplotlib.use('TkAgg')
     CONTEXT = 'fork'
+# sphinx_gallery_end_ignore
 
 import matplotlib.pyplot as plt
 import matplotlib

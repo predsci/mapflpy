@@ -14,10 +14,12 @@ as dictionary"* design pattern to update mapfl parameters after instantiation.
     recommended to use the :class:`~mapflpy.tracer.Tracer` class in single-threaded contexts only
     *viz.* instantiating one instance of the class at a time.
 """
+# sphinx_gallery_start_ignore
 import os
 if 'SPHINX_GALLERY_BUILD' not in os.environ:
     import matplotlib
     matplotlib.use('TkAgg')
+# sphinx_gallery_end_ignore
 
 import matplotlib.pyplot as plt
 import numpy as np

@@ -21,9 +21,11 @@ import os
 import numpy as np
 from psi_io import np_interpolate_slice_from_hdf
 
+# sphinx_gallery_start_ignore
 if 'SPHINX_GALLERY_BUILD' not in os.environ:
     import matplotlib
     matplotlib.use('TkAgg')
+# sphinx_gallery_end_ignore
 
 import matplotlib
 import matplotlib.pyplot as plt

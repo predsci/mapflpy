@@ -7,12 +7,14 @@ Perform simple tracing using the TracerMP class.
 This example demonstrates how to use the :class:`~mapflpy.tracer.TracerMP` class to perform
 forward tracing of magnetic field lines from a set of default starting points.
 """
+# sphinx_gallery_start_ignore
 import os
 CONTEXT = 'spawn'
 if 'SPHINX_GALLERY_BUILD' not in os.environ:
     import matplotlib
     matplotlib.use('TkAgg')
     CONTEXT = 'fork'
+# sphinx_gallery_end_ignore
 
 import matplotlib.pyplot as plt
 

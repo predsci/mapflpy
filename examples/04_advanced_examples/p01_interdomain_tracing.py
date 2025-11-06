@@ -9,11 +9,13 @@ function to trace magnetic field lines across domain boundaries.
 """
 import os
 
+# sphinx_gallery_start_ignore
 CONTEXT = 'spawn'
 if 'SPHINX_GALLERY_BUILD' not in os.environ:
     import matplotlib
     matplotlib.use('TkAgg')
     CONTEXT = 'fork'
+# sphinx_gallery_end_ignore
 
 import matplotlib.pyplot as plt
 

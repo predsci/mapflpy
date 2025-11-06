@@ -13,10 +13,12 @@ to classify tracing output into the following categories:
 - Disconnected field lines
 - Field lines that failed to fully resolve within the tracing buffer size
 """
+# sphinx_gallery_start_ignore
 import os
 if 'SPHINX_GALLERY_BUILD' not in os.environ:
     import matplotlib
     matplotlib.use('TkAgg')
+# sphinx_gallery_end_ignore
 
 import matplotlib
 import matplotlib.pyplot as plt

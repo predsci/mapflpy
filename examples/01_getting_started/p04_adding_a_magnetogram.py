@@ -8,12 +8,14 @@ This example demonstrates how to use :func:`~mapflpy.scripts.run_forward_tracing
 and :func:`~mapflpy.utils.plot_traces` function to plot magnetic field lines, along
 with :func:`~mapflpy.utils.plot_sphere` to add a magnetogram at the solar surface.
 """
+# sphinx_gallery_start_ignore
 import os
 CONTEXT = 'spawn'
 if 'SPHINX_GALLERY_BUILD' not in os.environ:
     import matplotlib
     matplotlib.use('TkAgg')
     CONTEXT = 'fork'
+# sphinx_gallery_end_ignore
 
 from psi_io import np_interpolate_slice_from_hdf
 import matplotlib.pyplot as plt

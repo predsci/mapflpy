@@ -8,12 +8,14 @@ This example demonstrates how to use explicitly set the :class:`~mapflpy.tracer.
 magnetic field data *i.e.* :attr:`~mapflpy.tracer._Tracer.br`, :attr:`~mapflpy.tracer._Tracer.bt`,
 and :attr:`~mapflpy.tracer._Tracer.bp` attributes.
 """
+# sphinx_gallery_start_ignore
 import os
 CONTEXT = 'spawn'
 if 'SPHINX_GALLERY_BUILD' not in os.environ:
     import matplotlib
     matplotlib.use('TkAgg')
     CONTEXT = 'fork'
+# sphinx_gallery_end_ignore
 
 import matplotlib.pyplot as plt
 
