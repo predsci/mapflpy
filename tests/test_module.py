@@ -1,6 +1,12 @@
 # tests/test_tracer.py
 import json
 
+def test_imports_from_site_packages():
+    import mapflpy
+    import pathlib
+    p = pathlib.Path(mapflpy.__file__).as_posix()
+    assert "site-packages" in p or "dist-packages" in p, p
+
 
 def test_shared_object():
     from tests.utils import check_shared_object
