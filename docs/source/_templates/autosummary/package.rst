@@ -5,6 +5,8 @@
 .. automodule:: {{ fullname }}
    :no-members:
 
+.. currentmodule:: {{ fullname }}
+
 {# start at the tree root #}
 {% set ns = namespace(node=pkgtree, ok=True) %}
 {% set match = namespace(value=none) %}
@@ -51,7 +53,7 @@
    :toctree: {{ name }}/
    :template: autosummary/package.rst
 {% for item in packages %}
-   ~{{ fullname ~ '.' ~ item }}
+   {{ item }}
 {%- endfor %}
 
 {% endif %}
@@ -63,7 +65,7 @@
    :toctree: {{ name }}/
    :template: autosummary/module.rst
 {% for item in modules %}
-   ~{{ fullname ~ '.' ~ item }}
+   {{ item }}
 {%- endfor %}
 
 {% endif %}
@@ -75,7 +77,7 @@
    :toctree: {{ name }}/
    :template: autosummary/class.rst
 {% for item in classes %}
-   ~{{ fullname ~ '.' ~ item }}
+   {{ item }}
 {%- endfor %}
 
 {% endif %}
@@ -87,7 +89,7 @@
    :toctree: {{ name }}/
    :template: autosummary/function.rst
 {% for item in functions %}
-   ~{{ fullname ~ '.' ~ item }}
+   {{ item }}
 {%- endfor %}
 
 {% endif %}
@@ -99,7 +101,7 @@
    :toctree: {{ name }}/
    :template: autosummary/attribute.rst
 {% for item in attributes %}
-   ~{{ fullname ~ '.' ~ item }}
+   {{ item }}
 {%- endfor %}
 
 {% endif %}
@@ -111,7 +113,7 @@
    :toctree: {{ name }}/
    :template: autosummary/exception.rst
 {% for item in exceptions %}
-   ~{{ fullname ~ '.' ~ item }}
+   {{ item }}
 {%- endfor %}
 
 {% endif %}

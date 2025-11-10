@@ -1,6 +1,6 @@
 """
 Trace Backward
-=============
+==============
 
 Perform backward tracing of magnetic field lines.
 

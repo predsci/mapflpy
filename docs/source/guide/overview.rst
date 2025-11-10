@@ -139,6 +139,7 @@ can be traced using the :meth:`~mapflpy.tracer._Tracer.trace` method.
 
 .. code-block:: python
    :linenos:
+
    from mapflpy.tracer import Tracer
    import numpy as np
 

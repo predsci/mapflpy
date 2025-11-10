@@ -1,6 +1,6 @@
 """
 Trace Forward & Backward
-=============
+========================
 
 Perform combined forward-backward tracing of magnetic field lines.
 
