@@ -32,6 +32,15 @@ REGISTRY = {
 	"2143-mast2-hel/bt002.h5": "sha256:7a52c64255adaf55df85d00d3cb772c19ad22dd23d98d264e067bc701b712e7d",
 	"2143-mast2-hel/bp002.h5": "sha256:f4937469c7e737dd872dc8d1731d7fc2040245eb08be432ee11bdd2fd4ec420c",
 }
+"""Registry of available magnetic field files with their SHA256 hashes. 
+
+This registry is used by the pooch fetcher to verify the integrity of
+downloaded files, and is primarily intended for building sphinx-gallery
+examples that require MHD data files.
+
+The files listed here correspond to a Thermo 2 steady-state run for
+Carrington Rotation 2143 – both the coronal and heliospheric domains.
+"""
 
 
 BASE_URL = "https://predsci.com/~rdavidson/assets/"
@@ -39,7 +48,7 @@ BASE_URL = "https://predsci.com/~rdavidson/assets/"
 
 .. note::
     The files are hosted on the PredSci web server under the
-    ``~rdavidson/assets/`` directory (which should [and will] change once we
+    https://predsci.com/\~rdavidson/assets/ directory (which should [and will] change once we
     partition off the necessary storage subdirectory under our static assets).
 """
 

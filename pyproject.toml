@@ -1,3 +1,8 @@
+# PyProject Configuration
+# =======================
+
+# Build System
+# ------------
 [build-system]
 build-backend = 'mesonpy'
 requires = [
@@ -7,6 +12,8 @@ requires = [
   "ninja>=1.8.2"
 ]
 
+# Project Metadata
+# ----------------
 [project]
 name = "mapflpy"
 dynamic = ["version"]
@@ -40,11 +47,15 @@ dependencies = [
   "psi-io>=1.0.0",
 ]
 
+# Project URLS
+# ------------
 [project.urls]
 homepage = "https://predsci.com/"
 documentation = "https://predsci.com/docs/mapflpy"
 repository = "https://github.com/predsci/mapflpy"
 
+# Project Dependencies
+# --------------------
 [project.optional-dependencies]
 hdf4 = [
   "pyhdf>=0.11.6"
@@ -71,23 +82,35 @@ docs = [
   "sphinx==8.2.3",
   "sphinx-book-theme==1.1.4",
   "sphinx-gallery==0.19.0",
+  "sphinx-copybutton==0.5.2",
   "pooch==1.8.2",
   "matplotlib==3.10.7",
-  "scipy"
+  "scipy",
+  "project-parser @ git+ssh://git@bitbucket.org/predsci/project-parser.git@main"
+]
+all = [
+  "mapflpy[hdf4,data,build,test,types,lint,docs]",
 ]
 
-[tool.setuptools.packages.find]
-include = [
-  "mapflpy",
-  "mapflpy.*"
-]
-exclude = [
-  "tests",
-  "docs",
-  "examples",
-  "src"
-]
+# Tools & Extensions
+# ==================
 
+## Setuptools configuration (if needed)
+## ------------------------------------
+#[tool.setuptools.packages.find]
+#include = [
+#  "mapflpy",
+#  "mapflpy.*"
+#]
+#exclude = [
+#  "tests",
+#  "docs",
+#  "examples",
+#  "src"
+#]
+
+# Testing (pytest) configuration
+# ------------------------------
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
@@ -99,6 +122,8 @@ addopts = [
   "--import-mode=importlib",
 ]
 
+# Coverage (pytest-cov) configuration
+# -----------------------------------
 [tool.coverage.run]
 branch = true
 source = ["mapflpy"]
@@ -120,6 +145,8 @@ exclude_lines = [
   "def __repr__",
 ]
 
+# Typing (mypy) configuration
+# ---------------------------
 [tool.mypy]
 python_version = "3.13"
 strict = true
@@ -130,6 +157,8 @@ files = ["mapflpy"]
 module = "mapflpy.*"
 ignore_missing_imports = false
 
+# Linting (ruff) configuration
+# ----------------------------
 [tool.ruff]
 target-version = "py313"
 line-length = 100
@@ -165,6 +194,8 @@ ignore = [
 quote-style = "double"
 indent-style = "space"
 
+# Documentation (sphinx) configuration
+# ------------------------------------
 [tool.sphinx_build]
 addopts = [
   "-b", "html",
@@ -172,6 +203,8 @@ addopts = [
   "-E"
 ]
 
+# Environment (mapflpy) configuration
+# -----------------------------------
 [tool.mapflpy]
 conda = [
   "c-compiler",

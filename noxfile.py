@@ -1,15 +1,14 @@
 # noxfile.py
 from __future__ import annotations
 
-import json
 import os
+import json
 import platform
-import subprocess
 from pathlib import Path
 import nox
 
 # Speed up reruns; reuse envs when deps unchanged
-nox.options.reuse_existing_virtualenvs = True
+nox.options.reuse_existing_virtualenvs = False
 
 
 PY_VERSIONS = ["3.10", "3.11", "3.12", "3.13"]
@@ -153,6 +152,22 @@ def docs(session: nox.Session) -> None:
     session.install(*pyproject["project"].get("optional-dependencies", {}).get("docs", []))
     args = pyproject["tool"].get("sphinx_build", {}).get("addopts", [])
 
-    out_dir = DOCDIST_DIR / f"html-cp{session.python.replace('.', '')}"
+    stamp = session.env_dir / ".mapflpy_tag.json"
+    session.run(
+        "python", "-c",
+        (
+            "import json; "
+            "from importlib import metadata as md; "
+            "d=md.distribution('mapflpy'); "
+            "txt=d.read_text('WHEEL'); "
+            "tags=[]; "
+            "tags=[ln.split(':',1)[1].strip() for ln in txt.splitlines() if ln.startswith('Tag: ')]; "
+            "out={'tags': tags}; "
+            f"open('{stamp}','w').write(json.dumps(out))"
+        )
+    )
+    tag = json.loads(Path(stamp).read_text())
+
+    out_dir = DOCDIST_DIR / f"html-{tag.get('tags', ['none'])[0]}"
     src_dir = PROJECT_NAME_PATH / "docs" / "source"
     session.run("sphinx-build", src_dir.as_posix(), out_dir.as_posix(), *args)
