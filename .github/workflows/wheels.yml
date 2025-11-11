@@ -22,10 +22,13 @@ jobs:
         python: [["cp311", "3.11"], ]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout mapflpy
+        uses: actions/checkout@v4
 
-      # Used to host cibuildwheel
-      - uses: actions/setup-python@v5
+      - name: Setup Python ${{ matrix.python[1] }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
 
       # Install gfortran on each OS
       - name: Setup Fortran Compiler
@@ -38,9 +41,9 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@9c00cb4f6b517705a3794b22395aedc36257242c
         env:
-          CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
+          CIBW_BUILD: ${{ matrix.python[0] }}-${{ matrix.buildplat[1] }}
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.python }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}
+          name: ${{ matrix.python[0] }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}
           path: ./wheelhouse/*.whl
