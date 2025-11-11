@@ -211,5 +211,6 @@ conda = [
   "cxx-compiler",
   "fortran-compiler",
   "pkg-config",
-  "hdf5"
+  "hdf5",
+  "zlib"
 ]
