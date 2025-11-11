@@ -24,7 +24,8 @@ jobs:
       - name: Install build dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install nox
+          pip install nox[pbs]
+          nox --download-python auto
 
       - name: Build wheels
         run: |

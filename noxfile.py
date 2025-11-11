@@ -76,7 +76,7 @@ def _dist_env(session: nox.Session) -> Path:
     )
 
 
-@nox.session(venv_backend='conda', python=PY_VERSIONS)
+@nox.session(venv_backend='conda|mamba|micromamba', python=PY_VERSIONS)
 def build(session: nox.Session) -> None:
     """Build the package wheel (with compilers)."""
     _build_env(session)
