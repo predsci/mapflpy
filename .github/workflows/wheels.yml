@@ -42,6 +42,12 @@ jobs:
         uses: pypa/cibuildwheel@9c00cb4f6b517705a3794b22395aedc36257242c
         env:
           CIBW_BUILD: ${{ matrix.python[0] }}-${{ matrix.buildplat[1] }}
+          CIBW_ENVIRONMENT_PASS_LINUX: "PKG_CONFIG_PATH"
+          CIBW_BEFORE_BUILD: |
+            set -eux
+            pkg-config --version
+            pkg-config --list-all | grep -i hdf5 || true
+            command -v h5cc || true
 
       - uses: actions/upload-artifact@v4
         with:
