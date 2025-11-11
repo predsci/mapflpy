@@ -36,7 +36,7 @@ jobs:
 
       - name: Build wheels
         run: |
-          nox --download-python -s build
+          nox -s build
 
       - name: Repair wheels
         run: |
