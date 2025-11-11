@@ -1,4 +1,3 @@
-# meson.build — conda-friendly, no pkg-config required
 
 project(
   'mapflpy',
@@ -44,7 +43,6 @@ f2py_dep  = declare_dependency(compile_args : ['-I' + f2py_inc_dir])
 fortranobject_c = f2py_inc_dir / 'fortranobject.c'
 
 # ---- HDF5 dependencies
-# Prefer discoverable pkg-config names when available; fall back to -l flags otherwise.
 hdf5_c = dependency('hdf5', required : true)
 hdf5f = declare_dependency(link_args : ['-lhdf5_fortran'], dependencies : [hdf5_c])
 hdf5f_hl = declare_dependency(link_args : ['-lhdf5hl_fortran'], dependencies : [hdf5_c])

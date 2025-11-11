@@ -44,24 +44,13 @@ jobs:
           CIBW_BUILD: ${{ matrix.python[0] }}-${{ matrix.buildplat[1] }}
           CIBW_BEFORE_BUILD_LINUX: |
             set -eux
-        
             unset PKG_CONFIG_PATH || true
-        
-            if command -v apk >/dev/null 2>&1; then
-              # musllinux (Alpine)
-              apk add --no-cache gfortran gcc g++ musl-dev make \
-                hdf5 hdf5-dev
-              export PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/local/lib/pkgconfig"
-            elif command -v yum >/dev/null 2>&1; then
-              # manylinux (RHEL-like)
-              yum -y install gcc-gfortran gcc-c++ make \
-                hdf5 hdf5-devel
-              export PKG_CONFIG_PATH="/usr/lib64/pkgconfig:/usr/lib/pkgconfig:/usr/local/lib/pkgconfig"
-            elif command -v dnf >/dev/null 2>&1; then
-              dnf -y install gcc-gfortran gcc-c++ make \
-                hdf5 hdf5-devel
-              export PKG_CONFIG_PATH="/usr/lib64/pkgconfig:/usr/lib/pkgconfig:/usr/local/lib/pkgconfig"
-            fi
+            yum -y install gcc-gfortran gcc-c++ make \
+              hdf5 hdf5-devel hdf5-fortran hdf5-fortran-devel
+          CIBW_ENVIRONMENT_LINUX: >-
+            CC=gcc
+            CXX=g++
+            FC=h5fc
 
       - uses: actions/upload-artifact@v4
         with:
