@@ -38,3 +38,15 @@ jobs:
       - name: Build wheels
         run: |
           nox -s build
+
+      - name: Repair wheels
+        run: |
+          nox -s repair
+
+      - name: List built wheels
+        run: |
+            ls -lR .nox/_artifacts/
+
+      - name: Run tests on built wheels
+        run: |
+          nox -s test
