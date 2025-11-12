@@ -86,7 +86,7 @@ docs = [
   "pooch==1.8.2",
   "matplotlib==3.10.7",
   "scipy",
-  "project-parser @ git+ssh://git@bitbucket.org/predsci/project-parser.git@main"
+#  "project-parser @ git+ssh://git@bitbucket.org/predsci/project-parser.git@main" ## TBD (upload to PyPI)
 ]
 all = [
   "mapflpy[hdf4,data,build,test,types,lint,docs]",
