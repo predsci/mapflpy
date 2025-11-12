@@ -35,6 +35,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install nox[pbs]
 
+      - name: macOS SDK + nox conda backend
+        if: startsWith(matrix.os, 'macos-')
+        run: |
+          echo "MACOSX_DEPLOYMENT_TARGET=11.0" >> "$GITHUB_ENV"
+          echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> "$GITHUB_ENV"
+          echo "CFLAGS=-isysroot $SDKROOT -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET" >> "$GITHUB_ENV"
+          echo "CXXFLAGS=-isysroot $SDKROOT -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET" >> "$GITHUB_ENV"
+          echo "FCFLAGS=-isysroot $SDKROOT -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET" >> "$GITHUB_ENV"
+          echo "LDFLAGS=-Wl,-syslibroot,$SDKROOT -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET" >> "$GITHUB_ENV"
+          # nox uses conda backend → micromamba
+          echo "CONDA_EXE=micromamba" >> "$GITHUB_ENV"
+
       - name: Build wheels
         run: |
           nox -s build

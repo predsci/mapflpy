@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import json
 import platform
+import subprocess
 from pathlib import Path
 import nox
 
@@ -43,13 +44,27 @@ def _darwin_sdk_env() -> dict[str, str]:
     env = {}
     env.setdefault("MACOSX_DEPLOYMENT_TARGET", os.environ.get("MACOSX_DEPLOYMENT_TARGET", "11.0"))
     # SDKPROJECT_NAME_PATH may be needed for clang/gfortran during Meson sanity checks
-    if "SDKPROJECT_NAME_PATH" not in os.environ:
-        try:
-            import subprocess
-            sdk = subprocess.check_output(["xcrun", "--show-sdk-path"], text=True).strip()
-            env["SDKPROJECT_NAME_PATH"] = sdk
-        except Exception:
-            pass
+    # if "SDKPROJECT_NAME_PATH" not in os.environ:
+    #     try:
+    #         import subprocess
+    #         sdk = subprocess.check_output(["xcrun", "--show-sdk-path"], text=True).strip()
+    #         env["SDKPROJECT_NAME_PATH"] = sdk
+    #     except Exception:
+    #         pass
+    # return env
+    try:
+        sdk = subprocess.check_output(
+            ["xcrun", "--sdk", "macosx", "--show-sdk-path"],
+            text=True
+        ).strip()
+        env["SDKROOT"] = os.environ.get("SDKROOT", sdk)
+        # Help the linkers/compilers see the SDK explicitly:
+        env.setdefault("CFLAGS",    f"-isysroot {sdk} -mmacosx-version-min={env['MACOSX_DEPLOYMENT_TARGET']}")
+        env.setdefault("CXXFLAGS",  f"-isysroot {sdk} -mmacosx-version-min={env['MACOSX_DEPLOYMENT_TARGET']}")
+        env.setdefault("FCFLAGS",   f"-isysroot {sdk} -mmacosx-version-min={env['MACOSX_DEPLOYMENT_TARGET']}")
+        env.setdefault("LDFLAGS",   f"-Wl,-syslibroot,{sdk} -mmacosx-version-min={env['MACOSX_DEPLOYMENT_TARGET']}")
+    except Exception:
+        pass
     return env
 
 
