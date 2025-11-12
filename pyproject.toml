@@ -51,7 +51,7 @@ dependencies = [
 # ------------
 [project.urls]
 homepage = "https://predsci.com/"
-documentation = "https://predsci.com/docs/mapflpy"
+documentation = "https://predsci.com/doc/mapflpy"
 repository = "https://github.com/predsci/mapflpy"
 
 # Project Dependencies
