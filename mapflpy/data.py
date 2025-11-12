@@ -1,13 +1,13 @@
 """
 Module for fetching HDF5 assets used through examples.
 
-This module uses the `pooch` library to manage the downloading and caching of
+This module uses the ``pooch`` library to manage the downloading and caching of
 HDF5 files containing magnetic field data. It defines functions to fetch
 coronal and heliospheric magnetic field files, returning their paths in a
 named tuple for easy access.
 
 Currently, the available Coronal and Heliospheric magnetic field files are hosted
-at https://predsci.com/~rdavidson/assets/ *viz.* a Thermo 2 steady-state run for
+at https://www.predsci.com/doc/assets/ *viz.* a Thermo 2 steady-state run for
 Carrington Rotation 2143.
 """
 
@@ -43,13 +43,8 @@ Carrington Rotation 2143 – both the coronal and heliospheric domains.
 """
 
 
-BASE_URL = "https://predsci.com/~rdavidson/assets/"
+BASE_URL = "https://www.predsci.com/doc/assets/"
 """Base URL hosting magnetic field file assets.
-
-.. note::
-    The files are hosted on the PredSci web server under the
-    https://predsci.com/\~rdavidson/assets/ directory (which should [and will] change once we
-    partition off the necessary storage subdirectory under our static assets).
 """
 
 
