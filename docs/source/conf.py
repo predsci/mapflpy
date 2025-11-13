@@ -1,18 +1,10 @@
 from __future__ import annotations
 
-import builtins
 import os
 import sys
-import importlib
-import pkgutil
-import re
-import ast
-import inspect
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from pathlib import Path
-from types import ModuleType
-from typing import Iterable
 
 try:
     # First try to run sphinx_build against installed dist
@@ -25,11 +17,11 @@ except ImportError:
     import mapflpy
 
 try:
-    from project_parser import build_node_tree
+    from pthree import build_node_tree, node_tree_to_dict
 except ImportError:
     raise ImportError(
-        "The 'project_parser' package is required to build the documentation. "
-        "Please install it via 'pip install project_parser' and try again."
+        "The 'pthree' package is required to build the documentation. "
+        "Please install it via 'pip install pthree' and try again."
     )
 
 # ------------------------------------------------------------------------------
@@ -70,15 +62,17 @@ html_theme_options = {
             "type": "fontawesome",
         },
         {
-            'name': 'Github',
-            'url': 'https://github.com/predsci/',
+            'name': 'Source Code',
+            'url': 'https://github.com/predsci/mapflpy',
+            # 'url': 'https://bitbucket.org/predsci/mapflpy',
+            # "icon": "fa-brands fa-bitbucket fa-fw",
             "icon": "fa-brands fa-github fa-fw",
             "type": "fontawesome",
         },
         {
-            'name': 'Bitbucket',
-            'url': 'https://bitbucket.org/predsci/',
-            "icon": "fa-brands fa-bitbucket fa-fw",
+            'name': 'Documentation',
+            'url': 'https://predsci.com/doc/mapflpy',
+            "icon": "fa fa-file fa-fw",
             "type": "fontawesome",
         },
         {
@@ -128,7 +122,7 @@ node_tree = build_node_tree(root_package,
                             exclude_dunder,
                             exclusions)
 
-autosummary_context = dict(pkgtree=asdict(node_tree))
+autosummary_context = dict(pkgtree=node_tree_to_dict(node_tree))
 
 # ------------------------------------------------------------------------------
 # Autodoc Configuration
