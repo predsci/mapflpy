@@ -1,7 +1,8 @@
 #!/bin/bash
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd -P)"
-TARGET_DIR="$SCRIPT_DIR/_intersphinx"
+PARENT_DIR="$(dirname "$SCRIPT_DIR")"
+TARGET_DIR="$PARENT_DIR/docs/_intersphinx"
 if [ ! -d "$TARGET_DIR" ]; then
     mkdir -p "$TARGET_DIR"
 fi

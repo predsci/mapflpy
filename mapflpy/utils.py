@@ -2,12 +2,11 @@
 Utility functions for processing fieldline traces.
 """
 from __future__ import annotations
+
 import math
-import os
 import random
-from collections import namedtuple
 from pathlib import Path
-from typing import Tuple, List, Any, Literal
+from typing import Tuple, List, Any
 
 import numpy as np
 from numpy._typing import NDArray

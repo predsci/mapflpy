@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PARENT_DIR="$(dirname "$SCRIPT_DIR")"
+
 fetch=0
 remove=0
 while getopts ":fr" name
@@ -13,15 +15,15 @@ do
 done
 
 if (( remove )); then
-  rm -rf "$SCRIPT_DIR/docs/_build" \
-         "$SCRIPT_DIR/docs/source/autodoc" \
-         "$SCRIPT_DIR/docs/source/gallery"
+  rm -rf "$PARENT_DIR/docs/_build" \
+         "$PARENT_DIR/docs/source/autodoc" \
+         "$PARENT_DIR/docs/source/gallery"
 fi
 
 if (( fetch )); then
-  rm -rf "$SCRIPT_DIR/docs/_intersphinx"
-  chmod +x "$SCRIPT_DIR/docs/fetch.sh"
-  "$SCRIPT_DIR/docs/fetch.sh"
+  rm -rf "$PARENT_DIR/docs/_intersphinx"
+  chmod +x "$PARENT_DIR/docs/fetch.sh"
+  "$PARENT_DIR/docs/fetch.sh"
 fi
 
-make -C "$SCRIPT_DIR/docs" html
+make -C "$PARENT_DIR/docs" html
