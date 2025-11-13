@@ -1,32 +1,27 @@
-name: mapflpy-dev
 channels:
   - conda-forge
 dependencies:
   # -------- Core Python --------
   - python=3.13
-  - pip
-  - wheel
 
-  # -------- Build toolchain (Meson + compilers) --------
+  # -------- Build toolchain --------
   - meson>=1.4
   - meson-python>=0.15
   - ninja>=1.11
+
+  # -------- Compilers --------
   - pkg-config
   - c-compiler
   - cxx-compiler
   - fortran-compiler
   - python-build
+  - zlib
+  - hdf5
 
-  # (Enable OpenMP only if you use it in your code)
-  # - llvm-openmp        # macOS
-  # - libgomp            # Linux
-
-  # -------- Numeric / IO (build + runtime) --------
-  - numpy               # headers needed at build; runtime too
-  - hdf5                # C/Fortran libs you link against
-  - h5py                # Python bindings (runtime)
-  - scipy               # (optional) your "interp" extra
-  - pyhdf               # (optional) your "hdf4" extra
+  # -------- Python Runtime --------
+  - numpy                 # package dependency
+  - h5py                  # psi-io dependency
+  - pyhdf                 # hdf4 support
 
   # -------- Testing / QA --------
   - pytest
@@ -40,11 +35,15 @@ dependencies:
   - sphinx
   - sphinx-book-theme
   - sphinx-gallery
+  - sphinx-copybutton
   - matplotlib
   - pooch
+  - scipy
 
-  # -------- Publish (optional; keep if you actually upload) --------
+  # -------- Publish --------
   - twine
 
+  - pip
   - pip:
-      - psi-io
+      - psi-io    # Python runtime package
+      - pthree    # Documentation building

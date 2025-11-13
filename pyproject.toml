@@ -25,7 +25,7 @@ authors = [
   {name = "Andres Reyes"},
   {name = "Asher Pembroke"},
 ]
-readme = "README.md"
+readme = "README.rst"
 license = "Apache-2.0"
 license-files = ["LICENSE.txt"]
 keywords = [
@@ -43,7 +43,6 @@ classifiers = [
 requires-python = ">=3.10"
 dependencies = [
   "numpy>=2.1.0",
-  "h5py>=3.15.0",
   "psi-io>=1.0.0",
 ]
 
@@ -86,7 +85,7 @@ docs = [
   "pooch==1.8.2",
   "matplotlib==3.10.7",
   "scipy",
-#  "project-parser @ git+ssh://git@bitbucket.org/predsci/project-parser.git@main" ## TBD (upload to PyPI)
+  "pthree==1.0.1"
 ]
 all = [
   "mapflpy[hdf4,data,build,test,types,lint,docs]",
