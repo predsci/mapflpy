@@ -43,6 +43,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ matrix.os }}
+          name: docs
           path: .nox/_artifacts/docs/html*/
           retention-days: 30
