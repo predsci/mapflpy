@@ -17,7 +17,8 @@ PY_TARGET = PY_VERSIONS[-1]
 
 PROJECT_NAME_PATH = Path(__file__).parent.resolve()
 ARTIFACTS = PROJECT_NAME_PATH / ".nox" / "_artifacts"
-WHEELDIST_DIR = ARTIFACTS / "dist"
+WHEEL_DIR = ARTIFACTS / "wheels"
+SDIST_DIR = ARTIFACTS / "sdist"
 WHEELHOUSE_DIR = ARTIFACTS / "wheelhouse"
 DOCDIST_DIR = ARTIFACTS / "docs"
 
@@ -31,7 +32,7 @@ REPAIR_TOOLS: dict[str, list[str]] = {
     "windows": ["delvewheel"],
 }
 
-WHEELDIST_DIR.mkdir(parents=True, exist_ok=True)
+WHEEL_DIR.mkdir(parents=True, exist_ok=True)
 WHEELHOUSE_DIR.mkdir(parents=True, exist_ok=True)
 DOCDIST_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -102,7 +103,7 @@ def build(session: nox.Session) -> None:
     )
     session.run(
         "python", "-m", "build",
-        "--wheel", "--outdir", WHEELDIST_DIR.as_posix(),
+        "--wheel", "--outdir", WHEEL_DIR.as_posix(),
         external=False
     )
 
@@ -110,7 +111,7 @@ def build(session: nox.Session) -> None:
 def repair(session: nox.Session) -> None:
     """Repair wheels in dist/ into wheelhouse/ using the OS-specific tool."""
     platform_id = platform.system().lower()
-    wheels = sorted(WHEELDIST_DIR.glob("*.whl"))
+    wheels = sorted(WHEEL_DIR.glob("*.whl"))
 
     match platform_id:
         case "linux":
@@ -144,6 +145,21 @@ def test(session: nox.Session) -> None:
 
     # Pytest
     session.run("pytest", PROJECT_NAME_PATH.as_posix())
+
+@nox.session(venv_backend='conda|mamba|micromamba', python=PY_TARGET)
+def sdist(session: nox.Session) -> None:
+    """Build the package wheel (with compilers)."""
+    _build_env(session)
+    session.conda_install(
+        *pyproject["build-system"].get("requires", []),
+        *pyproject["project"].get("optional-dependencies", {}).get("build", []),
+        channel="conda-forge",
+    )
+    session.run(
+        "python", "-m", "build",
+        "--sdist", "--outdir", SDIST_DIR.as_posix(),
+        external=False
+    )
 
 @nox.session(python=PY_TARGET)
 def types(session: nox.Session) -> None:
