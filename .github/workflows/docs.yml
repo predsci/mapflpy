@@ -1,11 +1,11 @@
-name: Build and Publish sdist
+name: Build and Publish wheels
 
 on:
   workflow_dispatch:
 
 jobs:
   build_wheels:
-    name: Build sdist
+    name: Build docs
     runs-on: ubuntu-latest
 
     steps:
@@ -27,13 +27,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install nox[pbs]
 
-      - name: Build sdist
+      - name: Build wheels
         run: |
-          nox -s sdist
+          nox -s build-3.13
 
-      - name: Upload sdist artifact
+      - name: Repair wheels
+        run: |
+          nox -s repair
+
+      - name: Build docs
+        run: |
+          nox -s docs
+
+      - name: Upload wheel artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          path: .nox/_artifacts/sdist/*.gz
+          name: wheels-${{ matrix.os }}
+          path: .nox/_artifacts/docs/html*/
           retention-days: 30
