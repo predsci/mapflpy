@@ -1,4 +1,4 @@
-name: Build and Publish wheels
+name: Build wheels
 
 on:
   workflow_dispatch:

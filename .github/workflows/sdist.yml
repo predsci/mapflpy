@@ -1,4 +1,4 @@
-name: Build and Publish sdist
+name: Build sdist
 
 on:
   workflow_dispatch:
