@@ -12,7 +12,12 @@ import nox
 nox.options.reuse_existing_virtualenvs = False
 
 
-PY_VERSIONS = ["3.10", "3.11", "3.12", "3.13"]
+PY_VERSIONS = [
+    # "3.10",
+    # "3.11",
+    # "3.12",
+    "3.13",
+]
 PY_TARGET = PY_VERSIONS[-1]
 
 PROJECT_NAME_PATH = Path(__file__).parent.resolve()
