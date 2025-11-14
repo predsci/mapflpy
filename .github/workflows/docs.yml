@@ -33,6 +33,10 @@ jobs:
       - name: Set nox conda backend
         run: echo "CONDA_EXE=micromamba" >> "$GITHUB_ENV"
 
+      - name: Build wheels
+        run: |
+          nox -s build
+
       - name: Repair wheels
         run: |
           nox -s repair
@@ -41,7 +45,7 @@ jobs:
         run: |
           nox -s docs
 
-      - name: Upload wheel artifacts
+      - name: Upload docs artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
