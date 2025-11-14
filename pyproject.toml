@@ -16,7 +16,7 @@ requires = [
 # ----------------
 [project]
 name = "mapflpy"
-dynamic = ["version"]
+version = "1.1.2"
 description = "Python extension for tracing field lines using the Fortran tracer from MapFL"
 authors = [
   {name = "Predictive Science Inc.", email = "webmaster@predsci.com"},

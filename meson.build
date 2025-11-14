@@ -1,11 +1,14 @@
 
 project(
   'mapflpy',
-  ['c', 'fortran'],
-  version : '1.1.2.pre2',
+  'c', 'cpp', 'fortran',
+  version: run_command(['tools/pyproject_version.py'], check: true).stdout().strip(),
   license : 'Apache-2.0',
   meson_version : '>=1.1.0',
-  default_options : ['warning_level=1', 'buildtype=release'],
+  default_options : [
+    'warning_level=1',
+    'buildtype=release'
+   ],
 )
 
 # ---- Compilers / platform niceties
