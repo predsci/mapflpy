@@ -1,10 +1,13 @@
-name: Build docs
+name: Publish Docs
 
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  build_wheels:
+  build_docs:
     name: Build docs
     runs-on: ubuntu-latest
 
@@ -27,9 +30,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install nox[pbs]
 
-      - name: Build wheels
-        run: |
-          nox -s build-3.13
+      - name: Set nox conda backend
+        run: echo "CONDA_EXE=micromamba" >> "$GITHUB_ENV"
 
       - name: Repair wheels
         run: |
@@ -45,4 +47,28 @@ jobs:
         with:
           name: docs
           path: .nox/_artifacts/docs/html*/
-          retention-days: 30
+          retention-days: 7
+
+      - name: Prepare SSH
+        env:
+          SSH_HOST: ${{ secrets.DOCS_SSH_HOST }}
+          SSH_PORT: ${{ secrets.DOCS_SSH_PORT }}
+        run: |
+          install -m 700 -d ~/.ssh
+          install -m 600 /dev/null ~/.ssh/id_rsync
+          printf '%s\n' "${{ secrets.DOCS_SSH_KEY }}" > ~/.ssh/id_rsync
+          ssh-keyscan -p "${SSH_PORT:-22}" "${SSH_HOST}" >> ~/.ssh/known_hosts
+
+      - name: Rsync to server
+        env:
+          SSH_HOST: ${{ secrets.DOCS_SSH_HOST }}
+          SSH_USER: ${{ secrets.DOCS_SSH_USER }}
+          SSH_PORT: ${{ secrets.DOCS_SSH_PORT }}
+          REMOTE_DIR: ${{ secrets.DOCS_SSH_PATH }}
+        run: |
+          # ensure target dir exists
+          ssh -i ~/.ssh/id_rsync -p "${SSH_PORT:-22}" -o StrictHostKeyChecking=yes \
+            "${SSH_USER}@${SSH_HOST}" "mkdir -p '${REMOTE_DIR}'"
+          rsync -az \
+            -e "ssh -i ~/.ssh/id_rsync -p ${SSH_PORT:-22} -o StrictHostKeyChecking=yes" \
+            .nox/_artifacts/docs/html*/ "${SSH_USER}@${SSH_HOST}:${REMOTE_DIR}/"

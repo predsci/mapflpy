@@ -2,7 +2,7 @@
 project(
   'mapflpy',
   ['c', 'fortran'],
-  version : '1.1.1.post1',
+  version : '1.1.1.test',
   license : 'Apache-2.0',
   meson_version : '>=1.1.0',
   default_options : ['warning_level=1', 'buildtype=release'],
