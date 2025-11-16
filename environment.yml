@@ -40,9 +40,13 @@ dependencies:
   - pooch
   - scipy
 
+  # -------- Scripts --------
+  - packaging
+
   # -------- Publish --------
   - twine
 
+  # -------- Pip installs --------
   - pip
   - pip:
       - psi-io    # Python runtime package

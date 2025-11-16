@@ -2,34 +2,32 @@
 from __future__ import annotations
 
 import os
+import re
 import json
 import platform
 import subprocess
 from pathlib import Path
 import nox
 
-# Speed up reruns; reuse envs when deps unchanged
-nox.options.reuse_existing_virtualenvs = False
+nox.options.reuse_existing_virtualenvs = True
+pyproject = nox.project.load_toml()
 
+PY_VERSIONS = nox.project.python_versions(pyproject)
+try:
+    txt = Path('.python-version').read_text(encoding="utf-8").strip().splitlines()[0]
+    m = re.search(r"(\d+)\.(\d+)", txt)  # grab major.minor; ignore patch/suffix
+    SYS_PYTHON = f"{m.group(1)}.{m.group(2)}" if m else PY_VERSIONS[-1]
+except FileNotFoundError as e:
+    SYS_PYTHON = PY_VERSIONS[-1]
 
-PY_VERSIONS = [
-    # "3.10",
-    # "3.11",
-    # "3.12",
-    "3.13",
-]
-PY_TARGET = PY_VERSIONS[-1]
-
-PROJECT_NAME_PATH = Path(__file__).parent.resolve()
-ARTIFACTS = PROJECT_NAME_PATH / ".nox" / "_artifacts"
-WHEEL_DIR = ARTIFACTS / "wheels"
-SDIST_DIR = ARTIFACTS / "sdist"
-WHEELHOUSE_DIR = ARTIFACTS / "wheelhouse"
-DOCDIST_DIR = ARTIFACTS / "docs"
-
-pyproject = nox.project.load_toml("pyproject.toml")
 PROJECT_NAME = pyproject["project"]["name"]
-CONDA_ENV_BUILD_COMPILERS = pyproject["tool"][PROJECT_NAME].get("conda", [])
+PROJECT_NAME_PATH = Path(__file__).parent.resolve()
+_ARTIFACTS = PROJECT_NAME_PATH / ".nox" / "_artifacts"
+
+WHEEL_DIR = _ARTIFACTS / "wheels"
+SDIST_DIR = _ARTIFACTS / "sdist"
+WHEELHOUSE_DIR = _ARTIFACTS / "wheelhouse"
+DOCDIST_DIR = _ARTIFACTS / "docs"
 
 REPAIR_TOOLS: dict[str, list[str]] = {
     "linux": ["auditwheel"],
@@ -37,6 +35,7 @@ REPAIR_TOOLS: dict[str, list[str]] = {
     "windows": ["delvewheel"],
 }
 
+SDIST_DIR.mkdir(parents=True, exist_ok=True)
 WHEEL_DIR.mkdir(parents=True, exist_ok=True)
 WHEELHOUSE_DIR.mkdir(parents=True, exist_ok=True)
 DOCDIST_DIR.mkdir(parents=True, exist_ok=True)
@@ -49,15 +48,6 @@ def _darwin_sdk_env() -> dict[str, str]:
     # Prefer already-set values; otherwise best-effort defaults
     env = {}
     env.setdefault("MACOSX_DEPLOYMENT_TARGET", os.environ.get("MACOSX_DEPLOYMENT_TARGET", "11.0"))
-    # SDKPROJECT_NAME_PATH may be needed for clang/gfortran during Meson sanity checks
-    # if "SDKPROJECT_NAME_PATH" not in os.environ:
-    #     try:
-    #         import subprocess
-    #         sdk = subprocess.check_output(["xcrun", "--show-sdk-path"], text=True).strip()
-    #         env["SDKPROJECT_NAME_PATH"] = sdk
-    #     except Exception:
-    #         pass
-    # return env
     try:
         sdk = subprocess.check_output(
             ["xcrun", "--sdk", "macosx", "--show-sdk-path"],
@@ -77,7 +67,7 @@ def _darwin_sdk_env() -> dict[str, str]:
 def _build_env(session: nox.Session) -> Path:
     """Build a wheel into ./dist and return its path."""
     session.conda_install(
-        *CONDA_ENV_BUILD_COMPILERS,
+        *pyproject["tool"][PROJECT_NAME].get("conda", []),
         channel="conda-forge"
     )
     session.env.update(_darwin_sdk_env())
@@ -112,7 +102,8 @@ def build(session: nox.Session) -> None:
         external=False
     )
 
-@nox.session(python=PY_TARGET)
+
+@nox.session(python=SYS_PYTHON)
 def repair(session: nox.Session) -> None:
     """Repair wheels in dist/ into wheelhouse/ using the OS-specific tool."""
     platform_id = platform.system().lower()
@@ -141,8 +132,6 @@ def test(session: nox.Session) -> None:
     """Build the wheel (with compilers), install it, then run pytest from a temp dir."""
     # Build wheel
     _dist_env(session)
-
-    # Runtime/test deps
     session.install(*pyproject["project"].get("optional-dependencies", {}).get("test", []))
 
     tmp = session.create_tmp()
@@ -151,7 +140,8 @@ def test(session: nox.Session) -> None:
     # Pytest
     session.run("pytest", PROJECT_NAME_PATH.as_posix())
 
-@nox.session(venv_backend='conda|mamba|micromamba', python=PY_TARGET)
+
+@nox.session(venv_backend='conda|mamba|micromamba', python=SYS_PYTHON)
 def sdist(session: nox.Session) -> None:
     """Build the package wheel (with compilers)."""
     _build_env(session)
@@ -166,14 +156,16 @@ def sdist(session: nox.Session) -> None:
         external=False
     )
 
-@nox.session(python=PY_TARGET)
+
+@nox.session(python=SYS_PYTHON)
 def types(session: nox.Session) -> None:
     """Mypy type checking (analyzes source tree)."""
     session.install(*pyproject["project"].get("optional-dependencies", {}).get("types", []))
 
     session.run("mypy")
 
-@nox.session(python=PY_TARGET)
+
+@nox.session(python=SYS_PYTHON)
 def lint(session: nox.Session) -> None:
     """Ruff lint + format check."""
     session.install(*pyproject["project"].get("optional-dependencies", {}).get("lint", []))
@@ -181,7 +173,8 @@ def lint(session: nox.Session) -> None:
     session.run("ruff", "check", PROJECT_NAME)
     session.run("ruff", "format", "--check", PROJECT_NAME)
 
-@nox.session(python=PY_TARGET)
+
+@nox.session(python=SYS_PYTHON)
 def docs(session: nox.Session) -> None:
     """Build Sphinx docs against the installed wheel."""
     _dist_env(session)
@@ -207,3 +200,40 @@ def docs(session: nox.Session) -> None:
     out_dir = DOCDIST_DIR / f"html-{tag.get('tags', ['none'])[0]}"
     src_dir = PROJECT_NAME_PATH / "docs" / "source"
     session.run("sphinx-build", src_dir.as_posix(), out_dir.as_posix(), *args)
+
+
+@nox.session(python=SYS_PYTHON)
+def build_matrix(session: nox.Session) -> None:
+    """Build, repair, and test in order (single entrypoint)."""
+    session.notify("sdist")
+    session.notify("build")
+    session.notify("repair")
+    session.notify("test")
+
+
+@nox.session(python=SYS_PYTHON)
+def build_target(session: nox.Session) -> None:
+    """Build, repair, and test in order (single entrypoint)."""
+    session.notify("sdist")
+    session.notify(f"build-{session.python}")
+    session.notify("repair")
+    session.notify(f"test-{session.python}")
+
+
+@nox.session(python=SYS_PYTHON)
+def build_docs(session: nox.Session) -> None:
+    """Build, repair, and test in order (single entrypoint)."""
+    session.notify("build_target")
+    session.notify("docs")
+
+
+@nox.session(python=SYS_PYTHON)
+def build_qa(session: nox.Session) -> None:
+    """Build, repair, and test in order (single entrypoint)."""
+    session.notify("build_target")
+    session.notify(f"types")
+    session.notify(f"lint")
+
+
+if __name__ == "__main__":
+    nox.main()

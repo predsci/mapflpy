@@ -34,17 +34,19 @@ keywords = [
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Science/Research",
-  "Operating System :: Unix",
-  "Operating System :: POSIX :: Linux",
-  "Operating System :: MacOS :: MacOS X",
   "Natural Language :: English",
+  "Programming Language :: Fortran",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
-  "Programming Language :: Fortran",
+  "Programming Language :: Python :: 3 :: Only",
+  "Operating System :: Unix",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: MacOS :: MacOS X",
+  "Typing :: Typed",
   "Topic :: Scientific/Engineering :: Astronomy",
   "Topic :: Scientific/Engineering :: Physics",
 ]
@@ -73,7 +75,8 @@ data = [
   "scipy"
 ]
 build = [
-  "python-build"
+  "python-build",
+  "packaging"
 ]
 test = [
   "pytest>=8.4.0",
@@ -95,8 +98,11 @@ docs = [
   "scipy",
   "pthree==1.0.1"
 ]
+dev = [
+  "nox>=2025.11.12",
+]
 all = [
-  "mapflpy[hdf4,data,build,test,types,lint,docs]",
+  "mapflpy[hdf4,data,build,test,types,lint,docs,dev]",
 ]
 
 # Tools & Extensions

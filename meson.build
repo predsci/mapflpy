@@ -95,10 +95,7 @@ py.extension_module(
   install : true,
 )
 
-# ---- Install the pure-Python package tree (future-proof)
-install_subdir('mapflpy', install_dir : py.get_install_dir())
-
-# ---- Generate mapflpy/_version.py with Meson project version
+# ---- Generate mapflpy/_version.py
 conf = configuration_data()
 conf.set('VERSION', meson.project_version())
 configure_file(
@@ -107,4 +104,15 @@ configure_file(
   configuration : conf,
   install       : true,
   install_dir   : py.get_install_dir() / 'mapflpy',
+)
+
+# ---- Install the pure-Python package tree
+install_subdir(
+  'mapflpy',
+  install_dir : py.get_install_dir(),
+  exclude_files: [
+    '_version.py.in',
+    '__pycache__',
+    '*.pyc',
+  ]
 )
