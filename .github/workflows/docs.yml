@@ -2,6 +2,12 @@ name: Publish Docs
 
 on:
   workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
 
 permissions:
   contents: read
@@ -33,17 +39,9 @@ jobs:
 #      - name: Set nox conda backend
 #        run: echo "CONDA_EXE=micromamba" >> "$GITHUB_ENV"
 #
-#      - name: Build wheels
-#        run: |
-#          nox -s build
-#
-#      - name: Repair wheels
-#        run: |
-#          nox -s repair
-#
 #      - name: Build docs
 #        run: |
-#          nox -s docs
+#          nox -s build_docs
 #
 #      - name: Upload docs artifact
 #        if: always()
@@ -52,6 +50,24 @@ jobs:
 #          name: docs
 #          path: .nox/_artifacts/docs/html*/
 #          retention-days: 7
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Create dummy docs
+        run: |
+          mkdir -p .nox/_artifacts/docs/html-test
+          date > .nox/_artifacts/docs/html-test/build-info.txt
+          echo '<html><body><h1>RSYNC TEST OK</h1></body></html>' \
+            > .nox/_artifacts/docs/html-test/index.html
+          ls -alR .nox/_artifacts/docs
+
+      - name: Upload dummy docs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dummy-docs
+          path: .nox/_artifacts/docs/html-test/
+          retention-days: 7
 
       - name: Prepare SSH
         env:
