@@ -69,15 +69,19 @@ jobs:
           path: .nox/_artifacts/docs/html-test/
           retention-days: 7
 
-      - name: Prepare SSH
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.DOCS_SSH_KEY }}
+          known_hosts: "placeholder"
+
+      - name: Add known_hosts from target
         env:
           SSH_HOST: ${{ secrets.DOCS_SSH_HOST }}
           SSH_PORT: ${{ secrets.DOCS_SSH_PORT }}
         run: |
-          install -m 700 -d ~/.ssh
-          install -m 600 /dev/null ~/.ssh/id_rsync
-          printf '%s\n' "${{ secrets.DOCS_SSH_KEY }}" > ~/.ssh/id_rsync
-          ssh-keyscan -p "${SSH_PORT:-22}" "${SSH_HOST}" >> ~/.ssh/known_hosts
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "${SSH_PORT:-22}" -H "${SSH_HOST}" >> ~/.ssh/known_hosts
 
       - name: Rsync to server
         env:
@@ -86,9 +90,12 @@ jobs:
           SSH_PORT: ${{ secrets.DOCS_SSH_PORT }}
           REMOTE_DIR: ${{ secrets.DOCS_SSH_PATH }}
         run: |
-          # ensure target dir exists
-          ssh -i ~/.ssh/id_rsync -p "${SSH_PORT:-22}" -o StrictHostKeyChecking=yes \
-            "${SSH_USER}@${SSH_HOST}" "mkdir -p '${REMOTE_DIR}'"
-          rsync -az \
-            -e "ssh -i ~/.ssh/id_rsync -p ${SSH_PORT:-22} -o StrictHostKeyChecking=yes" \
-            .nox/_artifacts/docs/html*/ "${SSH_USER}@${SSH_HOST}:${REMOTE_DIR}/"
+          mkdir -p .nox/_artifacts/docs/html-test
+          date > .nox/_artifacts/docs/html-test/build-info.txt
+
+          # make sure remote dir exists
+          ssh -p "${SSH_PORT:-22}" "${SSH_USER}@${SSH_HOST}" "mkdir -p '${REMOTE_DIR}'"
+
+          # deploy
+          rsync -az -e "ssh -p ${SSH_PORT:-22}" \
+            .nox/_artifacts/docs/html-test/ "${SSH_USER}@${SSH_HOST}:${REMOTE_DIR}/"
