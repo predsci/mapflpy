@@ -5,36 +5,49 @@
        <img
          src="https://www.predsci.com/corona/apr2024eclipse/images/psi_logo.png"
          alt="Predictive Science Inc. logo"
-         width="50"
+         width="50px"
        />
      </a>
-     <span style="font-size: 2em; font-weight: bold;">mapflpy</span>
+     <span style="font-size: 40px; font-weight: bold;">mapflpy</span>
    </p>
 
-.. image:: https://img.shields.io/pypi/v/mapflpy?logo=pypi&logoColor=white
-   :target: https://pypi.org/project/mapflpy
-   :align: center
+   <p style="text-align: center;">
+     <a href="https://pypi.org/project/mapflpy">
+       <img src="https://img.shields.io/pypi/v/mapflpy?logo=pypi&logoColor=white" alt="PyPI">
+     </a>
+   </p>
 
-.. image:: https://img.shields.io/pypi/pyversions/mapflpy.svg?logo=python&label=python&logoColor=white
-   :target: https://pypi.org/project/mapflpy
-   :align: center
+   <p style="text-align: center;">
+     <a href="https://pypi.org/project/mapflpy">
+       <img src="https://img.shields.io/pypi/pyversions/mapflpy.svg?logo=python&label=python&logoColor=white" alt="Python versions">
+     </a>
+   </p>
 
-.. image:: https://img.shields.io/pypi/l/mapflpy?logo=apache&logoColor=white
-   :target: https://opensource.org/license/apache-2-0/
-   :align: center
+   <p style="text-align: center;">
+     <a href="https://opensource.org/license/apache-2-0/">
+       <img src="https://img.shields.io/pypi/l/mapflpy?logo=apache&logoColor=white" alt="License">
+     </a>
+   </p>
 
-.. image:: https://img.shields.io/librariesio/github/predsci/mapflpy?logo=Libraries.io&logoColor=white
-   :target: https://github.com/predsci/mapflpy/blob/main/pyproject.toml
-   :alt: Libraries.io dependency status for GitHub repo
-   :align: center
+   <p style="text-align: center;">
+     <a href="https://github.com/predsci/mapflpy/blob/main/pyproject.toml">
+       <img src="https://img.shields.io/librariesio/github/predsci/mapflpy?logo=Libraries.io&logoColor=white" alt="Libraries.io status">
+     </a>
+   </p>
 
-.. image:: https://github.com/predsci/mapflpy/actions/workflows/publish.yml/badge.svg
-   :target: https://github.com/predsci/mapflpy/actions/workflows/publish.yml
-   :align: center
+   <p style="text-align: center;">
+     <a href="https://github.com/predsci/mapflpy/actions/workflows/publish.yml">
+       <img src="https://github.com/predsci/mapflpy/actions/workflows/publish.yml/badge.svg" alt="Publish workflow">
+     </a>
+   </p>
 
-.. image:: https://github.com/predsci/mapflpy/actions/workflows/docs.yml/badge.svg
-   :target: https://predsci.com/doc/mapflpy
-   :align: center
+   <p style="text-align: center;">
+     <a href="https://predsci.com/doc/mapflpy">
+       <img src="https://github.com/predsci/mapflpy/actions/workflows/docs.yml/badge.svg" alt="Docs workflow">
+     </a>
+   </p>
+
+----
 
 ----
 
