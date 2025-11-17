@@ -223,14 +223,20 @@ def build_target(session: nox.Session) -> None:
 @nox.session(python=SYS_PYTHON)
 def build_docs(session: nox.Session) -> None:
     """Build, repair, and test in order (single entrypoint)."""
-    session.notify("build_target")
+    session.notify("sdist")
+    session.notify(f"build-{session.python}")
+    session.notify("repair")
+    session.notify(f"test-{session.python}")
     session.notify("docs")
 
 
 @nox.session(python=SYS_PYTHON)
 def build_qa(session: nox.Session) -> None:
     """Build, repair, and test in order (single entrypoint)."""
-    session.notify("build_target")
+    session.notify("sdist")
+    session.notify(f"build-{session.python}")
+    session.notify("repair")
+    session.notify(f"test-{session.python}")
     session.notify(f"types")
     session.notify(f"lint")
 
