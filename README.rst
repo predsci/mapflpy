@@ -1,13 +1,12 @@
+.. image::
+    https://www.predsci.com/corona/apr2024eclipse/images/psi_logo.png
+    :alt: Predictive Science Inc. logo
+    :width: 100px
+    :align: center
+
 .. raw:: html
 
     <h1 align="center">
-      <a href="https://predsci.com">
-        <img
-          src="https://www.predsci.com/corona/apr2024eclipse/images/psi_logo.png"
-          alt="Predictive Science Inc. logo"
-          width="50"
-        />
-      </a>
       mapflpy
     </h1>
 
@@ -43,7 +42,6 @@
      <br/>
    </p>
 
-----
 
 Python extension for tracing field lines using the
 `MapFL <https://github.com/predsci/MapFL>`_ Fortran tracer.
