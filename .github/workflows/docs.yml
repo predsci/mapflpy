@@ -72,9 +72,6 @@ jobs:
           SSH_PORT: ${{ secrets.DOCS_SSH_PORT }}
           REMOTE_DIR: ${{ secrets.DOCS_SSH_PATH }}
         run: |
-          mkdir -p .nox/_artifacts/docs/html-test
-          date > .nox/_artifacts/docs/html-test/build-info.txt
-
           # make sure remote dir exists
           ssh -p "${SSH_PORT:-22}" "${SSH_USER}@${SSH_HOST}" "mkdir -p '${REMOTE_DIR}'"
 
@@ -82,5 +79,5 @@ jobs:
             --omit-dir-times --no-times \
             --no-perms --no-owner --no-group \
             -e "ssh -p ${SSH_PORT:-22}" \
-            .nox/_artifacts/docs/html-test/ "${SSH_USER}@${SSH_HOST}:${REMOTE_DIR}/"
+            .nox/_artifacts/docs/html*/ "${SSH_USER}@${SSH_HOST}:${REMOTE_DIR}/"
 
