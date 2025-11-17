@@ -96,6 +96,9 @@ jobs:
           # make sure remote dir exists
           ssh -p "${SSH_PORT:-22}" "${SSH_USER}@${SSH_HOST}" "mkdir -p '${REMOTE_DIR}'"
 
-          # deploy
-          rsync -az -e "ssh -p ${SSH_PORT:-22}" \
+          rsync -rlvz \
+            --omit-dir-times --no-times \
+            --no-perms --no-owner --no-group \
+            -e "ssh -p ${SSH_PORT:-22}" \
             .nox/_artifacts/docs/html-test/ "${SSH_USER}@${SSH_HOST}:${REMOTE_DIR}/"
+
