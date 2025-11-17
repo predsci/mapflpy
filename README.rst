@@ -1,12 +1,14 @@
-.. image::
-    https://www.predsci.com/corona/apr2024eclipse/images/psi_logo.png
-    :alt: Predictive Science Inc. logo
-    :width: 100px
-    :align: center
-
 .. raw:: html
 
     <h1 align="center">
+      <a href="https://predsci.com">
+        <img
+          src="https://www.predsci.com/corona/apr2024eclipse/images/psi_logo.png"
+          alt="Predictive Science Inc. logo"
+          width="100"
+        />
+      </a>
+     <br/>
       mapflpy
     </h1>
 
