@@ -1,52 +1,45 @@
 mapflpy
 =======
 
-
 .. image:: https://www.predsci.com/corona/apr2024eclipse/images/psi_logo.png
    :target: https://predsci.com
    :alt: Predictive Science Inc.
    :width: 100px
    :align: center
 
-
-.. image:: https://img.shields.io/pypi/v/mapflpy?logo=pypi&logoColor=white
+.. |pypi| image:: https://img.shields.io/pypi/v/mapflpy?logo=pypi&logoColor=white
    :target: https://pypi.org/project/mapflpy
    :alt: PyPI
-   :align: center
 
-
-.. image:: https://img.shields.io/pypi/l/mapflpy?logo=apache&logoColor=white
+.. |license| image:: https://img.shields.io/pypi/l/mapflpy?logo=apache&logoColor=white
    :target: https://opensource.org/license/apache-2-0/
    :alt: License
-   :align: center
 
-
-.. image:: https://img.shields.io/pypi/pyversions/mapflpy.svg?logo=python&label=python&logoColor=white
+.. |pyversions| image:: https://img.shields.io/pypi/pyversions/mapflpy.svg?logo=python&label=python&logoColor=white
    :target: https://pypi.org/project/mapflpy
    :alt: Python Versions
-   :align: center
 
-
-.. image:: https://img.shields.io/librariesio/github/predsci/mapflpy?logo=Libraries.io&logoColor=white
+.. |deps| image:: https://img.shields.io/librariesio/github/predsci/mapflpy?logo=Libraries.io&logoColor=white
    :target: https://github.com/predsci/mapflpy/blob/main/pyproject.toml
    :alt: Libraries.io
-   :align: center
 
-
-.. image:: https://github.com/predsci/mapflpy/actions/workflows/publish.yml/badge.svg?
+.. |publish| image:: https://github.com/predsci/mapflpy/actions/workflows/publish.yml/badge.svg?
    :target: https://github.com/predsci/mapflpy/actions/workflows/publish.yml
    :alt: Publish workflow
-   :align: center
 
-
-.. image:: https://github.com/predsci/mapflpy/actions/workflows/docs.yml/badge.svg?
+.. |docs| image:: https://github.com/predsci/mapflpy/actions/workflows/docs.yml/badge.svg?
    :target: https://predsci.com/doc/mapflpy
    :alt: Docs workflow
-   :align: center
+
+.. table::
+
+   +--------------+--------------+--------------+--------------+--------------+--------------+
+   | |pypi|       | |license|    | |pyversions| | |deps|       | |publish|    | |docs|       |
+   +--------------+--------------+--------------+--------------+--------------+--------------+
 
 
 **Fast field line tracing for spherical vector fields**
--------------------------------------------------------
+
 
 **mapflpy** is a python package for tracing field lines using the
 `MapFL <https://github.com/predsci/MapFL>`_ Fortran tracer developed by
