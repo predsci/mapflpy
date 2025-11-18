@@ -1,53 +1,52 @@
-.. raw:: html
+mapflpy
+=======
 
-    <h1 align="center">
-      <a href="https://predsci.com">
-        <img
-          src="https://www.predsci.com/corona/apr2024eclipse/images/psi_logo.png"
-          alt="Predictive Science Inc. logo"
-          width="100"
-        />
-      </a>
-     <br/>
-      mapflpy
-    </h1>
 
-   <p align="center">
-     <a href="https://pypi.org/project/mapflpy">
-       <img src="https://img.shields.io/pypi/v/mapflpy?logo=pypi&logoColor=white" alt="PyPI">
-     </a>
-     <br/>
+.. image:: https://www.predsci.com/corona/apr2024eclipse/images/psi_logo.png
+   :target: https://predsci.com
+   :alt: Predictive Science Inc.
+   :width: 100px
+   :align: center
 
-     <a href="https://opensource.org/license/apache-2-0/">
-       <img src="https://img.shields.io/pypi/l/mapflpy?logo=apache&logoColor=white" alt="License">
-     </a>
-     <br/>
 
-     <a href="https://pypi.org/project/mapflpy">
-       <img src="https://img.shields.io/pypi/pyversions/mapflpy.svg?logo=python&label=python&logoColor=white" alt="Python versions">
-     </a>
-     <br/>
+.. image:: https://img.shields.io/pypi/v/mapflpy?logo=pypi&logoColor=white
+   :target: https://pypi.org/project/mapflpy
+   :alt: PyPI
+   :align: center
 
-     <a href="https://github.com/predsci/mapflpy/blob/main/pyproject.toml">
-       <img src="https://img.shields.io/librariesio/github/predsci/mapflpy?logo=Libraries.io&logoColor=white" alt="Libraries.io status">
-     </a>
-     <br/>
 
-     <a href="https://github.com/predsci/mapflpy/actions/workflows/publish.yml">
-       <img src="https://github.com/predsci/mapflpy/actions/workflows/publish.yml/badge.svg" alt="Publish workflow">
-     </a>
-     <br/>
+.. image:: https://img.shields.io/pypi/l/mapflpy?logo=apache&logoColor=white
+   :target: https://opensource.org/license/apache-2-0/
+   :alt: License
+   :align: center
 
-     <a href="https://predsci.com/doc/mapflpy">
-       <img src="https://github.com/predsci/mapflpy/actions/workflows/docs.yml/badge.svg" alt="Docs workflow">
-     </a>
-     <br/>
-   </p>
 
-   <p align="center">
-     <strong>Fast field line tracing for spherical vector fields</strong>
-   </p>
+.. image:: https://img.shields.io/pypi/pyversions/mapflpy.svg?logo=python&label=python&logoColor=white
+   :target: https://pypi.org/project/mapflpy
+   :alt: Python Versions
+   :align: center
 
+
+.. image:: https://img.shields.io/librariesio/github/predsci/mapflpy?logo=Libraries.io&logoColor=white
+   :target: https://github.com/predsci/mapflpy/blob/main/pyproject.toml
+   :alt: Libraries.io
+   :align: center
+
+
+.. image:: https://github.com/predsci/mapflpy/actions/workflows/publish.yml/badge.svg?
+   :target: https://github.com/predsci/mapflpy/actions/workflows/publish.yml
+   :alt: Publish workflow
+   :align: center
+
+
+.. image:: https://github.com/predsci/mapflpy/actions/workflows/docs.yml/badge.svg?
+   :target: https://predsci.com/doc/mapflpy
+   :alt: Docs workflow
+   :align: center
+
+
+**Fast field line tracing for spherical vector fields**
+-------------------------------------------------------
 
 **mapflpy** is a python package for tracing field lines using the
 `MapFL <https://github.com/predsci/MapFL>`_ Fortran tracer developed by
@@ -71,13 +70,7 @@ or `contact <https://www.predsci.com/portal/contact.php>`_ Predictive Science In
 
 ----
 
-.. raw:: html
-
-    <p align="center">
-      <a href="https://predsci.com">Predictive Science Inc.</a>
-      <br/>
-      <a href="https://github.com/predsci/mapflpy">Repository</a> |
-      <a href="https://predsci.com/doc/mapflpy">Documentation</a> |
-      <a href="https://pypi.org/project/mapflpy">Distribution</a>
-    </p>
-
+`Predictive Science Inc. <https://predsci.com>`_ |
+`Repository <https://github.com/predsci/mapflpy>`_ |
+`Documentation <https://predsci.com/doc/mapflpy>`_ |
+`Distribution <https://pypi.org/project/mapflpy>`_ |
