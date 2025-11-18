@@ -753,12 +753,10 @@ class _Tracer(MutableMapping, ABC):
     @abstractmethod
     def _mapfl_id(self) -> int:
         """Return the memory ID of the Fortran interface (for process isolation validation)."""
-        pass
 
     @abstractmethod
     def _run(self) -> None:
         """Invoke :meth:`run` with the current parameter set."""
-        pass
 
     @abstractmethod
     def _trace(self,
@@ -766,7 +764,6 @@ class _Tracer(MutableMapping, ABC):
                buff: int
                ) -> Traces:
         """Perform fieldline tracing using `mapfl.trace()`."""
-        pass
 
 
 class Tracer(_Tracer):

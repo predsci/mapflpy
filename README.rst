@@ -18,13 +18,13 @@
      </a>
      <br/>
 
-     <a href="https://pypi.org/project/mapflpy">
-       <img src="https://img.shields.io/pypi/pyversions/mapflpy.svg?logo=python&label=python&logoColor=white" alt="Python versions">
+     <a href="https://opensource.org/license/apache-2-0/">
+       <img src="https://img.shields.io/pypi/l/mapflpy?logo=apache&logoColor=white" alt="License">
      </a>
      <br/>
 
-     <a href="https://opensource.org/license/apache-2-0/">
-       <img src="https://img.shields.io/pypi/l/mapflpy?logo=apache&logoColor=white" alt="License">
+     <a href="https://pypi.org/project/mapflpy">
+       <img src="https://img.shields.io/pypi/pyversions/mapflpy.svg?logo=python&label=python&logoColor=white" alt="Python versions">
      </a>
      <br/>
 
@@ -74,8 +74,9 @@ or `contact <https://www.predsci.com/portal/contact.php>`_ Predictive Science In
 .. raw:: html
 
     <p align="center">
-      <a href="https://predsci.com">Predictive Science Inc.</a> |
-      <a href="https://github.com/predsci/mapflpy">Source Code</a> |
+      <a href="https://predsci.com">Predictive Science Inc.</a>
+      <br/>
+      <a href="https://github.com/predsci/mapflpy">Repository</a> |
       <a href="https://predsci.com/doc/mapflpy">Documentation</a> |
       <a href="https://pypi.org/project/mapflpy">Distribution</a>
     </p>

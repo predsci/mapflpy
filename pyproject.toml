@@ -17,7 +17,7 @@ requires = [
 [project]
 name = "mapflpy"
 version = "1.1.2"
-description = "Python extension for tracing field lines using the Fortran tracer from MapFL"
+description = "Fast field line tracing for spherical vector fields"
 authors = [
   {name = "Predictive Science Inc.", email = "webmaster@predsci.com"},
   {name = "Ryder Davidson"},
@@ -172,6 +172,8 @@ ignore_missing_imports = false
 # Linting (ruff) configuration
 # ----------------------------
 [tool.ruff]
+fix = false
+unsafe-fixes = false
 line-length = 100
 src = ["mapflpy"]
 extend-exclude = [
@@ -185,25 +187,84 @@ extend-exclude = [
 ]
 
 [tool.ruff.lint]
-select = [
-  "E",
-  "F",
-  "W",
-  "I",
-  "N",
-  "B",
-  "UP",
-  "SIM"
+explicit-preview-rules = true
+preview = true
+extend-select = [
+  "A",     # flake8-builtins
+  "AIR",   # Airflow
+  "ANN",   # flake8-annotations
+  "ARG",   # flake8-unused-arguments
+  "ASYNC", # flake8-async
+  "B",     # flake8-bugbear
+  "BLE",   # flake8-blind-except
+  "C4",    # flake8-comprehensions
+  "C90",   # mccabe
+  "COM",   # flake8-commas
+  # "CPY",   # flake8-copyright  # TODO: enable when out of preview
+  "D",     # pydocstyle
+  "DJ",    # flake8-django
+  # "DOC",   # pydocstyle  # TODO: enable when out of preview
+  "DTZ",   # flake8-datetimez
+  "E",     # pycodestyle
+  "EM",    # flake8-errmsg
+  "ERA",   # Eradicate
+  "EXE",   # flake8-executable
+  "F",     # Pyflakes
+  "FA",    # flake8-future-annotations
+  "FBT",   # flake8-boolean-trap
+  "FIX",   # flake8-fixme
+  "FLY",   # flynt
+  "FURB",  # refurb
+  "G",     # flake8-logging-format
+  "I",     # isort
+  "ICN",   # flake8-import-conventions
+  "INP",   # flake8-no-pep420
+  "INT",   # flake8-gettext
+  "ISC",   # flake8-implicit-str-concat
+  "LOG",   # flake8-logging
+  "N",     # pep8-naming
+  "NPY",   # NumPy-specific rules
+  "PERF",  # Perflint
+  "PGH",   # pygrep-hooks
+  "PIE",   # flake8-pie
+  "PL",    # Pylint
+  "PT",    # flake8-pytest-style
+  "PTH",   # flake8-use-pathlib
+  "PYI",   # flake8-pyi
+  "Q",     # flake8-quotes
+  "RET",   # flake8-return
+  "RSE",   # flake8-raise
+  "RUF",   # Ruff-specific rules
+  "S",     # flake8-bandit
+  "SIM",   # flake8-simplify
+  "SLOT",  # flake8-slots
+  "T10",   # flake8-debugger
+  "T20",   # flake8-print
+  "TD",    # flake8-todos
+  "TID",   # flake8-tidy-imports
+  "TRY",   # tryceratops
+  "UP",    # pyupgrade
+  "W",     # pycodestyle
+  "YTT",   # flake8-2020
 ]
 ignore = [
-  "E203",
-  "E501",
-  "F841"
+  "B905",    #`zip()` without an explicit `strict=` parameter
+  "C408",    # Unnecessary `dict()` call (rewrite as a literal)
+  "NPY002", # Replace legacy `np.random.rand` call with `np.random.Generator`
 ]
 
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.isort]
+known-first-party = ["mapflpy"]
+combine-as-imports = true
+force-single-line = true
+force-sort-within-sections = true
+required-imports = [
+  "from __future__ import annotations",
+]
 
 # Documentation (sphinx) configuration
 # ------------------------------------

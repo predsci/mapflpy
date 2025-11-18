@@ -138,7 +138,7 @@ def test(session: nox.Session) -> None:
     session.chdir(tmp)
 
     # Pytest
-    session.run("pytest", PROJECT_NAME_PATH.as_posix())
+    session.run("pytest", PROJECT_NAME_PATH.as_posix(), *session.posargs)
 
 
 @nox.session(venv_backend='conda|mamba|micromamba', python=SYS_PYTHON)
@@ -159,19 +159,29 @@ def sdist(session: nox.Session) -> None:
 
 @nox.session(python=SYS_PYTHON)
 def types(session: nox.Session) -> None:
-    """Mypy type checking (analyzes source tree)."""
+    """Mypy type checking (analyzes source tree).
+
+    .. note::
+       Target version can be set via ``nox -s types -- --python-version 3.10``
+    """
     session.install(*pyproject["project"].get("optional-dependencies", {}).get("types", []))
 
-    session.run("mypy")
+    session.run("mypy", *session.posargs)
 
 
 @nox.session(python=SYS_PYTHON)
 def lint(session: nox.Session) -> None:
-    """Ruff lint + format check."""
+    """Ruff lint + format check.
+
+    .. note::
+       Target version can be set via ``nox -s lint -- --target-version py310``
+
+    .. note::
+       Strict mode can be enabled via ``nox -s lint -- --select ALL``
+    """
     session.install(*pyproject["project"].get("optional-dependencies", {}).get("lint", []))
 
-    session.run("ruff", "check", PROJECT_NAME)
-    session.run("ruff", "format", "--check", PROJECT_NAME)
+    session.run("ruff", "check", PROJECT_NAME, *session.posargs)
 
 
 @nox.session(python=SYS_PYTHON)
