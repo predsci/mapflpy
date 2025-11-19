@@ -1,4 +1,4 @@
-.. |psi| image:: https://www.predsci.com/corona/apr2024eclipse/images/psi_logo.png
+.. |psi| image:: https://predsci.com/doc/assets/static/psi_logo.png
    :target: https://predsci.com
    :alt: Predictive Science Inc.
    :width: 20px
@@ -34,9 +34,8 @@
 |publish|
 |docs|
 
-----
 |psi| **MAPFLPY** | *field line tracing for spherical vector fields*
-----
+--------------------------------------------------------------------
 
 **mapflpy** is a python package for tracing field lines using the
 `MapFL <https://github.com/predsci/MapFL>`_ Fortran tracer developed by
