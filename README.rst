@@ -1,11 +1,7 @@
-mapflpy
-=======
-
-.. image:: https://www.predsci.com/corona/apr2024eclipse/images/psi_logo.png
+.. |psi| image:: https://www.predsci.com/corona/apr2024eclipse/images/psi_logo.png
    :target: https://predsci.com
    :alt: Predictive Science Inc.
-   :width: 100px
-   :align: center
+   :width: 20px
 
 .. |pypi| image:: https://img.shields.io/pypi/v/mapflpy?logo=pypi&logoColor=white
    :target: https://pypi.org/project/mapflpy
@@ -31,15 +27,16 @@ mapflpy
    :target: https://predsci.com/doc/mapflpy
    :alt: Docs workflow
 
-.. table::
+|pypi|
+|license|
+|pyversions|
+|deps|
+|publish|
+|docs|
 
-   +--------------+--------------+--------------+--------------+--------------+--------------+
-   | |pypi|       | |license|    | |pyversions| | |deps|       | |publish|    | |docs|       |
-   +--------------+--------------+--------------+--------------+--------------+--------------+
-
-
-**Fast field line tracing for spherical vector fields**
-
+----
+|psi| **MAPFLPY** | *field line tracing for spherical vector fields*
+----
 
 **mapflpy** is a python package for tracing field lines using the
 `MapFL <https://github.com/predsci/MapFL>`_ Fortran tracer developed by
@@ -58,7 +55,7 @@ To get started with **mapflpy**, visit the
 an overview of features, and development/contribution guidelines; a gallery of
 `examples <https://predsci.com/doc/mapflpy/gallery/>`_ is also available, showcasing
 various use cases and functionalities of the package. Please direct any questions or
-issues pertaining to **mapflpy** to the repository `issue tracker <https://github.com/predsci/mapflpy/issues>`_,
+issues to the `issue tracker <https://github.com/predsci/mapflpy/issues>`_,
 or `contact <https://www.predsci.com/portal/contact.php>`_ Predictive Science Inc. directly.
 
 ----
@@ -66,4 +63,4 @@ or `contact <https://www.predsci.com/portal/contact.php>`_ Predictive Science In
 `Predictive Science Inc. <https://predsci.com>`_ |
 `Repository <https://github.com/predsci/mapflpy>`_ |
 `Documentation <https://predsci.com/doc/mapflpy>`_ |
-`Distribution <https://pypi.org/project/mapflpy>`_ |
+`Distribution <https://pypi.org/project/mapflpy>`_
