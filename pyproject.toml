@@ -29,8 +29,17 @@ readme = "README.rst"
 license = "Apache-2.0"
 license-files = ["LICENSE.txt"]
 keywords = [
-  "solar physics", "space physics", "heliophysics", "magnetohydrodynamic", "science",
-  "mas", "predsci", "psi", "modeling", "fortran"]
+  "solar physics",
+  "space physics",
+  "heliophysics",
+  "magnetohydrodynamic",
+  "science",
+  "mas",
+  "predsci",
+  "psi",
+  "modeling",
+  "fortran"
+]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Science/Research",
@@ -108,8 +117,8 @@ all = [
 # Tools & Extensions
 # ==================
 
-## Setuptools configuration (if needed)
-## ------------------------------------
+## Setuptools configuration
+## ------------------------
 #[tool.setuptools.packages.find]
 #include = [
 #  "mapflpy",
@@ -119,7 +128,8 @@ all = [
 #  "tests",
 #  "docs",
 #  "examples",
-#  "src"
+#  "src",
+#  "tools"
 #]
 
 # Testing (pytest) configuration
@@ -200,10 +210,10 @@ extend-select = [
   "C4",    # flake8-comprehensions
   "C90",   # mccabe
   "COM",   # flake8-commas
-  # "CPY",   # flake8-copyright  # TODO: enable when out of preview
+  # "CPY",   # flake8-copyright
   "D",     # pydocstyle
   "DJ",    # flake8-django
-  # "DOC",   # pydocstyle  # TODO: enable when out of preview
+  # "DOC",   # pydocstyle
   "DTZ",   # flake8-datetimez
   "E",     # pycodestyle
   "EM",    # flake8-errmsg
