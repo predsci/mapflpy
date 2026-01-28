@@ -52,16 +52,11 @@ print("Geometry shape:", traces.geometry.shape)
 # contiguous memory layout for efficient processing and visualization.
 
 # %%
-# `psi-io <https://pypi.org/project/psi-io/>`_ :meth:`~psi_io.np_interpolate_slice_from_hdf` is
+# `psi-io <https://predsci.com/doc/psi-io/>`_ :py:func:`~psi_io.psi_io.np_interpolate_slice_from_hdf` is
 # used to linearly interpolate a 2D slice of data at the solar surface (r=1.0 Rs), using the
 # radial component of the magnetic field.
-#
-# .. note::
-#
-#    Currently there is no documentation website for the ``psi-io`` package, but the source code is
-#    available for further inspection at https://github.com/predsci/psi-io
-values, theta_scale, phi_scale = np_interpolate_slice_from_hdf(1.0, None, None,
-                                                               ifile=magnetic_field_files.br)
+values, theta_scale, phi_scale = np_interpolate_slice_from_hdf(magnetic_field_files.br,
+                                                               1.0, None, None,)
 
 # %%
 # Plot traces using the :func:`~mapflpy.utils.plot_traces` utility function and adjust
@@ -70,7 +65,7 @@ rsample = np.random.random_sample(size=traces.geometry.shape[-1])
 colors = matplotlib.colormaps['hsv'](rsample)
 
 ax = plt.figure().add_subplot(projection='3d')
-plot_sphere(values, 1.0, theta_scale, phi_scale, clim=(-10, 10), ax=ax)
+plot_sphere(values.T, 1.0, theta_scale, phi_scale, clim=(-10, 10), ax=ax)
 plot_traces(traces, ax=ax, colors=colors)
 FOV = 2.5  # Rsun
 for dim in 'xyz':

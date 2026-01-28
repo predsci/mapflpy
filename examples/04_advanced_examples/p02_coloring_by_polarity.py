@@ -93,18 +93,14 @@ polarity_cmap = matplotlib.colors.ListedColormap(
 colors = polarity_cmap((polarity.astype(int) + 2) / 4)  # Normalize to [0, 1] for colormap
 
 # %%
-# `psi-io <https://pypi.org/project/psi-io/>`_ :meth:`~psi_io.np_interpolate_slice_from_hdf` is
+# `psi-io <https://predsci.com/doc/psi-io/>`_ :py:func:`~psi_io.psi_io.np_interpolate_slice_from_hdf` is
 # used to linearly interpolate a 2D slice of data at the solar surface (r=1.0 Rs), using the
 # radial component of the magnetic field.
-#
-# .. note::
-#    Currently there is no documentation website for the ``psi-io`` package, but the source code is
-#    available for further inspection at https://github.com/predsci/psi-io
 ax = plt.figure().add_subplot(projection='3d')
 plot_traces(traces, ax=ax, colors=colors)
-values, theta_scale, phi_scale = np_interpolate_slice_from_hdf(1.0, None, None,
-                                                               ifile=magnetic_field_files.br)
-plot_sphere(values, 1.0, theta_scale, phi_scale, clim=(-10, 10), ax=ax)
+values, theta_scale, phi_scale = np_interpolate_slice_from_hdf(magnetic_field_files.br,
+                                                           1.0, None, None,)
+plot_sphere(values.T, 1.0, theta_scale, phi_scale, clim=(-10, 10), ax=ax)
 
 FOV = 1.5  # Rsun
 for dim in 'xyz':

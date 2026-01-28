@@ -29,7 +29,7 @@ from typing import Iterable, Optional, Tuple, Callable, Literal
 import numpy as np
 from numpy._typing import NDArray
 
-from psi_io import read_hdf_by_value
+from psi_io import read_hdf_data
 
 from mapflpy.globals import (
     DEFAULT_PARAMS,
@@ -258,7 +258,7 @@ def _mapflpy_trace_listener(pipe):
             # This function is the same as the _set_field method called in Tracer._set_field()
             # For further details on the implementation of this function, see the Tracer
             # class documentation.
-            bx, bx_r, bx_t, bx_p = read_hdf_by_value(ifile=value)
+            bx, bx_r, bx_t, bx_p = read_hdf_data(value)
             match bx.shape:
                 case fshape if fshape == (len(bx_p), len(bx_t), len(bx_r)):
                     mapfl_params[key] = bx.astype('float64').T
@@ -560,7 +560,7 @@ class _Tracer(MutableMapping, ABC):
             case filepath if isinstance(filepath, (str, Path, PathLike)):
                 if not Path(filepath).exists():
                     raise FileNotFoundError(f"File '{filepath}' does not exist.")
-                bx, bx_r, bx_t, bx_p = read_hdf_by_value(ifile=str(filepath))
+                bx, bx_r, bx_t, bx_p = read_hdf_data(str(filepath))
             case None:
                 self._mapfl_params[key] = None
                 for dim in 'rtp':
@@ -621,7 +621,7 @@ class _Tracer(MutableMapping, ABC):
 
         Returns
         -------
-        launch_points : np.ndarray
+        launch_points : ndarray
             A (3, N) Fortran-ordered array.
         """
         if lps is None:
@@ -673,7 +673,7 @@ class _Tracer(MutableMapping, ABC):
 
         Parameters
         ----------
-        launch_points : np.ndarray, optional
+        launch_points : ndarray, optional
             Array of shape (3, N) for r, t, p coordinates. If None, uses defaults.
         buffer_size : int
             Maximum number of steps per fieldline.

@@ -62,7 +62,7 @@ classifiers = [
 requires-python = ">=3.10"
 dependencies = [
   "numpy>=2.1.0",
-  "psi-io>=1.0.0",
+  "psi-io>=2.0.2",
 ]
 
 # Project URLS

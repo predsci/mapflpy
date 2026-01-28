@@ -19,7 +19,7 @@ if 'SPHINX_GALLERY_BUILD' not in os.environ:
 
 import matplotlib.pyplot as plt
 import numpy as np
-from psi_io import read_hdf_by_index
+from psi_io import read_hdf_data
 
 from mapflpy.tracer import Tracer
 from mapflpy.utils import plot_traces, fetch_default_launch_points
@@ -39,20 +39,12 @@ magnetic_field_files = fetch_cor_magfiles()
 tracer = Tracer()
 
 # %%
-# Here we use `psi-io <https://pypi.org/project/psi-io/>`_ to read in the magnetic field data
-# into memory as NumPy arrays, and then assign them to the respective attributes of the
-# :class:`~mapflpy.tracer.Tracer` instance.
-#
-# .. note::
-#   When no ``*args`` are passed to the :func:`read_hdf_by_index` function, it reads in the
-#   entire dataset. For typical MAS magnetic field files, this results in a tuple where:
-#
-#   - the first element is the 3D array of magnetic field values (Fortran ordered),
-#   - the subsequent elements are the scale arrays (r, theta, phi).
-
-br = read_hdf_by_index(ifile=magnetic_field_files.br)
-bt = read_hdf_by_index(ifile=magnetic_field_files.bt)
-bp = read_hdf_by_index(ifile=magnetic_field_files.bp)
+# Here we use `psi-io <https://predsci.com/doc/psi-io/>`_ to read in the magnetic field data
+# into memory as NumPy arrays (using :py:func:`~psi_io.psi_io.read_hdf_data`), and then assign
+# them to the respective attributes of the :class:`~mapflpy.tracer.Tracer` instance.
+br = read_hdf_data(magnetic_field_files.br)
+bt = read_hdf_data(magnetic_field_files.bt)
+bp = read_hdf_data(magnetic_field_files.bp)
 
 tracer.br = br
 tracer.bt = bt

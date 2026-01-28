@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import math
 import random
-from pathlib import Path
 from typing import Tuple, List, Any
 
 import numpy as np
@@ -236,7 +235,7 @@ def get_fieldline_polarity(inner_boundary: float,
         The radial distance of the inner spherical boundary (e.g., 1 R_sun).
     outer_boundary : float
         The radial distance of the outer spherical boundary (e.g., 30 R_sun).
-    br_filepath : str or Path
+    br_filepath : PathType
         Path to an HDF file containing the Br (radial magnetic field) component data.
         This is used to determine the sign of open field lines.
     *traces : Traces or tuple of ndarray
@@ -264,7 +263,7 @@ def get_fieldline_polarity(inner_boundary: float,
         If the number or type of arguments in `traces` is invalid.
     ImportError
         If the optional :py:mod:`scipy` library is not installed, which is required for
-        ``psi_io.interpolate_positions_from_hdf``.
+        :py:func:`psi_io.psi_io.interpolate_positions_from_hdf`.
 
     Notes
     -----
@@ -309,10 +308,10 @@ def get_fieldline_polarity(inner_boundary: float,
         # np.concatenate(...).T call creates a (M, 3) array, where M is the number of open field lines.
         # and (for open field lines that started at the outer boundary and ended at the inner boundary),
         # the appropriate endpoint is used, i.e. the endpoint at the inner boundary.
-        br_values = interpolate_positions_from_hdf(*np.concatenate((endpoints[0, :, open_fls],
+        br_values = interpolate_positions_from_hdf(str(br_filepath),
+                                                   *np.concatenate((endpoints[0, :, open_fls],
                                                                     endpoints[1, :,
-                                                                    open_inv])).T,
-                                                   ifile=str(br_filepath))
+                                                                    open_inv])).T,)
         pvalues = np.sign(br_values)
         polarity[
             open_fls | open_inv] = np.where(pvalues < 0, Polarity.R0_R1_NEG, Polarity.R0_R1_POS)
@@ -329,16 +328,16 @@ def get_fieldline_endpoints(traces) -> NDArray[float]:
 
     Parameters
     ----------
-    traces : np.ndarray
+    traces : ndarray
         A `Traces` object or a 3D NumPy array of shape (M, 3, N), where:
-        - M is the buffer length (number of points along a fieldline),
-        - 3 represents the coordinates (e.g., r, t, p),
-        - N is the number of fieldlines.
+            - M is the buffer length (number of points along a fieldline),
+            - 3 represents the coordinates (e.g., r, t, p),
+            - N is the number of fieldlines.
         NaN values represent unused buffer space.
 
     Returns
     -------
-    endpoints : np.ndarray
+    endpoints : ndarray
         An array of shape (2, 3, N) containing the start and end points
         of each fieldline. The first index is 0 for start and 1 for end.
     """

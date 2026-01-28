@@ -92,10 +92,10 @@ polarity = get_fieldline_polarity(1,
 # %%
 # First, we plot the magnetic field sphere at 1 Rsun for context using the
 # :func:`~mapflpy.utils.plot_sphere` utility function.
-values, theta_scale, phi_scale = np_interpolate_slice_from_hdf(1.0, None, None,
-                                                               ifile=magnetic_field_files.br)
+values, theta_scale, phi_scale = np_interpolate_slice_from_hdf(magnetic_field_files.br,
+                                                           1.0, None, None,)
 ax = plt.figure().add_subplot(projection='3d')
-plot_sphere(values, 1.0, theta_scale, phi_scale, clim=(-10, 10), ax=ax)
+plot_sphere(values.T, 1.0, theta_scale, phi_scale, clim=(-10, 10), ax=ax)
 FOV = 2  # Rsun
 for dim in 'xyz':
     getattr(ax, f'set_{dim}lim3d')((-FOV, FOV))
@@ -119,7 +119,7 @@ for p, color in polarity_mapping.items():
         print(f'Polarity {p.name}: {np.sum(pmask)} field lines')
         ax = plt.figure().add_subplot(projection='3d')
         plot_traces(traces.geometry[...,pmask], ax=ax, color=color)
-        plot_sphere(values, 1.0, theta_scale, phi_scale, clim=(-10, 10), ax=ax)
+        plot_sphere(values.T, 1.0, theta_scale, phi_scale, clim=(-10, 10), ax=ax)
         FOV = 15  # Rsun
         for dim in 'xyz':
             getattr(ax, f'set_{dim}lim3d')((-FOV, FOV))
