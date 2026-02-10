@@ -4,11 +4,16 @@ import shutil
 import multiprocessing as mp
 from _weakrefset import WeakSet
 from pathlib import Path
+from types import MappingProxyType
 
 import numpy as np
 import pytest
 
 from psi_io import wrhdf_3d
+
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from tests.utils import _MESH_RESOLUTION, _TRACING_DIRECTION, _OLD_MAS, _BASE_MESH_PARAMS, _BASE_LPS_PARAMS, _MESH_RESO_MAPPING, _TRACING_DIR_MAPPING, _OLD_MAS_MAPPING, _DOMAIN_RANGES
 
 
 @pytest.fixture(autouse=True)
@@ -45,103 +50,144 @@ def launch_point_factory():
 
 
 @pytest.fixture(scope="session")
-def default_params():
-    from tests.utils import read_defaults
-    return read_defaults()
-
-
-@pytest.fixture(scope="session")
-def default_mesh_params(default_params):
-    return default_params["mesh"]
-
-
-@pytest.fixture(scope="session")
-def default_lps_params(default_params):
-    return default_params["lps"]
-
-
-@pytest.fixture(scope="session")
 def reference_traces():
     ref_path = Path(__file__).parent / "data" / "reference_traces.npz"
     ref_traces = np.load(ref_path, allow_pickle=True)
     return ref_traces
 
 
+@pytest.fixture(scope="session",
+                params=_MESH_RESOLUTION)
+def mesh_resolution(request):
+    return request.param
+
+
+@pytest.fixture(scope="session",
+                params=_TRACING_DIRECTION)
+def tracing_direction(request):
+    return request.param
+
+
+@pytest.fixture(scope="session",
+                params=_OLD_MAS)
+def mas_type(request):
+    return request.param
+
+
 @pytest.fixture(scope="session")
-def _default_fields_cached(default_mesh_params):
-    from tests.utils import dipole_field
-    return dipole_field(**default_mesh_params["base"], **default_mesh_params["params"]["normal"])
+def tmp_data_dir(tmp_path_factory):
+    # One temp directory for the whole test session
+    return tmp_path_factory.mktemp("test_data_dir")
 
 
-@pytest.fixture(scope="session", params=["coarse", "normal", "fine"], ids=lambda x: x)
-def _mesh_fields_cached(tmp_path_factory, default_mesh_params, dipole_field_factory, request):
-    level = request.param
+@pytest.fixture(scope="session")
+def _default_fields_cached(dipole_field_factory, mas_type):
+    return dipole_field_factory(**_BASE_MESH_PARAMS, **_MESH_RESO_MAPPING["normal"], **_OLD_MAS_MAPPING[mas_type])
+
+
+@pytest.fixture(scope="session")
+def _mesh_fields_cached(tmp_data_dir, dipole_field_factory,
+                        mesh_resolution, mas_type):
     br, bt, bp, r, t, p = dipole_field_factory(
-        **default_mesh_params["base"],
-        **default_mesh_params["params"][level],
+        **_BASE_MESH_PARAMS,
+        **_MESH_RESO_MAPPING[mesh_resolution],
+        **_OLD_MAS_MAPPING[mas_type]
     )
-    data_dir = tmp_path_factory.mktemp(f"{level}_magnetic_field_files")
+    data_dir = tmp_data_dir / mesh_resolution / mas_type
+    data_dir.mkdir(parents=True, exist_ok=True)
     for dim, data in zip(['br', 'bt', 'bp'], [br, bt, bp]):
         filepath = data_dir / f"{dim}.h5"
-        wrhdf_3d(str(filepath), r, t, p, data)
-    yield level, tuple(data_dir / f"{dim}.h5" for dim in ['br', 'bt', 'bp']), (br, bt, bp, r, t, p)
-    shutil.rmtree(data_dir, ignore_errors=True)
+        if not filepath.exists():
+            wrhdf_3d(str(filepath), r, t, p, data)
+    return tuple(data_dir / f"{dim}.h5" for dim in ['br', 'bt', 'bp']), (br, bt, bp, r, t, p)
 
 
-@pytest.fixture(scope="session", params=["fwd", "bwd", "both"], ids=lambda x: x)
-def _launch_points_cached(default_lps_params, launch_point_factory, request):
-    level = request.param
+@pytest.fixture(scope="session")
+def _launch_points_cached(launch_point_factory, tracing_direction):
     lps = launch_point_factory(
-        **default_lps_params['base'],
-        **default_lps_params['params'][level]
+        **_BASE_LPS_PARAMS,
+        **_TRACING_DIR_MAPPING[tracing_direction],
     )
-    return level, lps
+    return lps
 
 
-@pytest.fixture(scope="session", params=["coarse", "normal", "fine"], ids=lambda x: x)
-def interdomain_files(tmp_path_factory, default_params, dipole_field_factory, request):
-    level = request.param
+@pytest.fixture(scope="session")
+def interdomain_files(tmp_data_dir, dipole_field_factory,
+                      mesh_resolution, mas_type):
     base_params = {
-        **default_params["mesh"]["base"],
-        **default_params["mesh"]["params"][level]
+        **_BASE_MESH_PARAMS,
+        **_MESH_RESO_MAPPING[mesh_resolution],
+        **_OLD_MAS_MAPPING[mas_type]
     }
-    cor_params = {**base_params, **default_params["_testing"]["domain_ranges"]["cor"]}
-    hel_params = {**base_params, **default_params["_testing"]["domain_ranges"]["hel"]}
+    cor_params = {**base_params, **_DOMAIN_RANGES['cor']}
+    hel_params = {**base_params, **_DOMAIN_RANGES['hel']}
     
     br_cor, bt_cor, bp_cor, r_cor, t_cor, p_cor = dipole_field_factory(**cor_params)
     br_hel, bt_hel, bp_hel, r_hel, t_hel, p_hel = dipole_field_factory(**hel_params)
     
-    data_dir = tmp_path_factory.mktemp(f"{level}_magnetic_field_files")
+    data_dir = tmp_data_dir / mesh_resolution / mas_type
+    data_dir.mkdir(parents=True, exist_ok=True)
     for dim, data in zip(['br_cor', 'bt_cor', 'bp_cor'], [br_cor, bt_cor, bp_cor]):
         filepath = data_dir / f"{dim}.h5"
-        wrhdf_3d(str(filepath), r_cor, t_cor, p_cor, data)
+        if not filepath.exists():
+            wrhdf_3d(str(filepath), r_cor, t_cor, p_cor, data)
     for dim, data in zip(['br_hel', 'bt_hel', 'bp_hel'], [br_hel, bt_hel, bp_hel]):
         filepath = data_dir / f"{dim}.h5"
-        wrhdf_3d(str(filepath), r_hel, t_hel, p_hel, data)
-    yield level, tuple(data_dir / f"{dim}_{dom}.h5" for dom in ['cor', 'hel'] for dim in ['br', 'bt', 'bp'])
-    shutil.rmtree(data_dir, ignore_errors=True)
+        if not filepath.exists():
+            wrhdf_3d(str(filepath), r_hel, t_hel, p_hel, data)
+    return tuple(data_dir / f"{dim}_{dom}.h5" for dom in ['cor', 'hel'] for dim in ['br', 'bt', 'bp'])
+
+
+@pytest.fixture(scope="session")
+def old_and_new_mas(tmp_data_dir, dipole_field_factory, mesh_resolution):
+    data_dir_old_mas = tmp_data_dir / mesh_resolution /'old_mas'
+    data_dir_new_mas = tmp_data_dir / mesh_resolution /'new_mas'
+    if any(not (data_dir_old_mas / f'{dim}.h5').exists() for dim in ('br', 'bt', 'bp')):
+        br_old, bt_old, bp_old, r_old, t_old, p_old = dipole_field_factory(
+            **_BASE_MESH_PARAMS,
+            **_MESH_RESO_MAPPING[mesh_resolution],
+            **_OLD_MAS_MAPPING['old_mas']
+        )
+        data_dir_old_mas.mkdir(parents=True, exist_ok=True)
+        for dim, data in zip(['br', 'bt', 'bp'], [br_old, bt_old, bp_old]):
+            fp = data_dir_old_mas / f"{dim}.h5"
+            wrhdf_3d(str(fp), r_old, t_old, p_old, data)
+
+    if any(not (data_dir_new_mas / f'{dim}.h5').exists() for dim in ('br', 'bt', 'bp')):
+        br_new, bt_new, bp_new, r_new, t_new, p_new = dipole_field_factory(
+            **_BASE_MESH_PARAMS,
+            **_MESH_RESO_MAPPING[mesh_resolution],
+            **_OLD_MAS_MAPPING['new_mas']
+        )
+        data_dir_new_mas.mkdir(parents=True, exist_ok=True)
+        for dim, data in zip(['br', 'bt', 'bp'], [br_new, bt_new, bp_new]):
+            fp = data_dir_new_mas / f"{dim}.h5"
+            wrhdf_3d(str(fp), r_new, t_new, p_new, data)
+
+    return (tuple(data_dir_old_mas / f"{dim}.h5" for dim in ['br', 'bt', 'bp']),
+           tuple(data_dir_new_mas / f"{dim}.h5" for dim in ['br', 'bt', 'bp']))
 
 
 @pytest.fixture
 def mesh_fields_asarray(_mesh_fields_cached):
-    level, _, fields = _mesh_fields_cached
+    _, fields = _mesh_fields_cached
     # Return fresh copies of arrays for each test
     copied = tuple(np.copy(a) if hasattr(a, "dtype") else a for a in fields)
-    return level, copied
+    return copied
 
 
 @pytest.fixture
 def mesh_fields_aspaths(_mesh_fields_cached):
-    level, paths, _ = _mesh_fields_cached
-    return level, tuple(str(p) for p in paths)
+    paths, _= _mesh_fields_cached
+    return tuple(str(p) for p in paths)
 
 
 @pytest.fixture
 def launch_points(_launch_points_cached):
-    level, lps = _launch_points_cached
+    lps = _launch_points_cached
     # Return fresh copies of arrays for each test
     copied = np.copy(lps)
-    return level, copied
+    return copied
 
 
 @pytest.fixture
@@ -161,8 +207,7 @@ def _default_datadir(tmp_path_factory, _default_fields_cached):
     for dim, data in zip(['br', 'bt', 'bp'], [br, bt, bp]):
         filepath = data_dir / f"{dim}.h5"
         wrhdf_3d(str(filepath), r, t, p, data)
-    yield data_dir
-    shutil.rmtree(data_dir, ignore_errors=True)
+    return data_dir
 
 
 @pytest.fixture(scope="session")

@@ -4,6 +4,7 @@
 import gc
 import importlib
 from pathlib import Path
+from types import MappingProxyType
 from typing import Tuple
 import json
 
@@ -12,6 +13,72 @@ from mapflpy.tracer import Tracer
 from numpy._typing import NDArray
 
 from mapflpy.utils import combine_fwd_bwd_traces, trim_fieldline_nan_buffer
+
+
+# ----------------------------------------------
+# PARAMETERS FOR FIXTURES
+# ----------------------------------------------
+_OLD_MAS = ('old_mas', 'new_mas')
+_MESH_RESOLUTION = ("coarse", "normal", "fine")
+_TRACING_DIRECTION = ("fwd", "bwd", "both")
+
+
+# ----------------------------------------------
+# dipole_field PARAMETER MAPPINGS
+# ----------------------------------------------
+_BASE_MESH_PARAMS = MappingProxyType({
+    "lon": 180.0, "lat": 45.0, "r0": 1.0, "r1": 10.0,
+    "r_resolution": 71, "t_resolution": 91, "p_resolution": 181
+})
+
+_MESH_RESO_MAPPING = MappingProxyType({
+    k: {"resfac": v} for k, v in zip(_MESH_RESOLUTION, (0.5, 1.0, 2.0))
+})
+
+_OLD_MAS_MAPPING = MappingProxyType({
+    k: {"remove_phi_point": v} for k, v in zip(_OLD_MAS, (True, False))
+})
+
+# ----------------------------------------------
+# _recreate_lps_from_defaults PARAMETER MAPPINGS
+# ----------------------------------------------
+_BASE_LPS_PARAMS = MappingProxyType({
+    "t_values": np.linspace(0, np.pi, 4),
+    "p_values": np.linspace(0, 2*np.pi, 8),
+})
+
+_TRACING_DIR_MAPPING = MappingProxyType({
+    k: {"r_values": v} for k, v in zip(_TRACING_DIRECTION, (1.01, 9.99, 4.50))
+})
+
+_BUFFER_SIZE = 1000
+
+# ----------------------------------------------
+# INTERDOMAIN RANGES AND TEST TOLERANCES
+# ----------------------------------------------
+
+_DOMAIN_RANGES = MappingProxyType({
+    "cor": {
+        "r0": 1.0,
+        "r1": 4.0
+    },
+    "hel": {
+        "r0": 4.0,
+        "r1": 10.0
+    },
+    "combined": {
+        "r0": 1.0,
+        "r1": 10.0
+    }
+})
+
+
+_TEST_TOLERANCES = MappingProxyType({
+      "atol_exact": 1e-10,
+      "atol_fuzzy": 1e-5,
+      "rtol_exact": 1e-7,
+      "rtol_fuzzy": 1e-5
+})
 
 
 def _recreate_lps_from_defaults(r_values: NDArray[float],
@@ -232,72 +299,70 @@ def generate_reference_traces() -> None:
         'description': 'Reference magnetic field-line traces for testing the Tracer class.',
         'tracefunc': 'mapflpy.tests.utils.generate_reference_traces',
         'meshfunc': 'mapflpy.tests.utils.dipole_field',
-        'defaults': read_defaults(),
     }
 
     # Directory where the reference file will be saved (next to this module)
     data_dir_path = Path(__file__).parent / 'data'
-
-    # Project-wide defaults that define mesh presets and launch-point (LP) presets
-    defaults = read_defaults()
 
     # We'll accumulate all trace arrays here and dump them in one NPZ at the end.
     # Keys are "{mesh_key}_{lp_key}_{i}" → value is a single trace array.
     output_mapping = {}
 
     # Iterate through each mesh resolution/preset (e.g., "coarse", "normal", "fine")
-    for mesh_key, mesh_value in defaults['mesh']['params'].items():
-        # Synthesize a dipole field and its spherical grids for this mesh
-        br, bt, bp, r, t, p = dipole_field(
-            **defaults['mesh']['base'],
-            **mesh_value,
-        )
+    for mesh_res_k, mesh_res_v in _MESH_RESO_MAPPING.items():
+        for old_mas_k, old_mas_v in _OLD_MAS_MAPPING.items():
+            # Synthesize a dipole field and its spherical grids for this mesh
+            br, bt, bp, r, t, p = dipole_field(
+                **_BASE_MESH_PARAMS,
+                **mesh_res_v,
+                **old_mas_v
+            )
 
-        # Create and configure the tracer with each field component and its grid.
-        # The Tracer expects tuples of (values, r, theta, phi) for each component.
-        tracer = Tracer()
-        tracer.br = br, r, t, p
-        tracer.bt = bt, r, t, p
-        tracer.bp = bp, r, t, p
+            # Create and configure the tracer with each field component and its grid.
+            # The Tracer expects tuples of (values, r, theta, phi) for each component.
+            tracer = Tracer()
+            tracer.br = br, r, t, p
+            tracer.bt = bt, r, t, p
+            tracer.bp = bp, r, t, p
 
-        # Iterate through LP presets and trace in the requested direction(s)
-        for lp_key, lp_value in defaults['lps']['params'].items():
-            match lp_key:
-                case 'fwd':
-                    # Recreate launch points for this preset and trace forward
-                    lps = _recreate_lps_from_defaults(**defaults['lps']['base'], **lp_value)
-                    tracer.set_tracing_direction('f')
-                    traces = tracer.trace(lps, buffer_size=defaults['lps']['BUFFER'])
+            # Iterate through LP presets and trace in the requested direction(s)
+            for lp_key, lp_value in _TRACING_DIR_MAPPING.items():
+                match lp_key:
+                    case 'fwd':
+                        # Recreate launch points for this preset and trace forward
+                        lps = _recreate_lps_from_defaults(**_BASE_LPS_PARAMS, **lp_value)
+                        tracer.set_tracing_direction('f')
+                        traces = tracer.trace(lps, buffer_size=_BUFFER_SIZE)
 
-                case 'bwd':
-                    # Recreate launch points and trace backward
-                    lps = _recreate_lps_from_defaults(**defaults['lps']['base'], **lp_value)
-                    tracer.set_tracing_direction('b')
-                    traces = tracer.trace(lps, buffer_size=defaults['lps']['BUFFER'])
+                    case 'bwd':
+                        # Recreate launch points and trace backward
+                        lps = _recreate_lps_from_defaults(**_BASE_LPS_PARAMS, **lp_value)
+                        tracer.set_tracing_direction('b')
+                        traces = tracer.trace(lps, buffer_size=_BUFFER_SIZE)
 
-                case 'both':
-                    # Trace both forward and backward, then combine into a single trace
-                    lps = _recreate_lps_from_defaults(**defaults['lps']['base'], **lp_value)
-                    tracer.set_tracing_direction('f')
-                    fwd_traces = tracer.trace(lps, buffer_size=defaults['lps']['BUFFER'])
-                    tracer.set_tracing_direction('b')
-                    bwd_traces = tracer.trace(lps, buffer_size=defaults['lps']['BUFFER'])
-                    traces = combine_fwd_bwd_traces(fwd_traces, bwd_traces)
+                    case 'both':
+                        # Trace both forward and backward, then combine into a single trace
+                        lps = _recreate_lps_from_defaults(**_BASE_LPS_PARAMS, **lp_value)
+                        tracer.set_tracing_direction('f')
+                        fwd_traces = tracer.trace(lps, buffer_size=_BUFFER_SIZE)
+                        tracer.set_tracing_direction('b')
+                        bwd_traces = tracer.trace(lps, buffer_size=_BUFFER_SIZE)
+                        traces = combine_fwd_bwd_traces(fwd_traces, bwd_traces)
 
-                case _:
-                    # Guard against configuration typos / unsupported directions
-                    raise ValueError(f'Unknown tracing direction: {lp_key}')
+                    case _:
+                        # Guard against configuration typos / unsupported directions
+                        raise ValueError(f'Unknown tracing direction: {lp_key}')
 
-            # Trim any NaN padding the tracer may add to pre-allocated buffers
-            traces_list = trim_fieldline_nan_buffer(traces)
+                # Trim any NaN padding the tracer may add to pre-allocated buffers
+                traces_list = trim_fieldline_nan_buffer(traces)
 
-            # Store each individual trace in the output mapping with a stable key
-            for i, arr in enumerate(traces_list):
-                output_mapping[f'{mesh_key}_{lp_key}_{i}'] = arr
+                # Store each individual trace in the output mapping with a stable key
+                for i, arr in enumerate(traces_list):
+                    output_mapping[f'{mesh_res_k}_{old_mas_k}_{lp_key}_{i}'] = arr
 
-        # Explicit cleanup between mesh presets to control memory
-        del tracer
-        gc.collect()
+            # Explicit cleanup between mesh presets to control memory
+            del tracer
+            gc.collect()
 
     # Persist all traces into a single NPZ. The consumer can load by key.
     # NOTE: np.savez does not take an `allow_pickle` kwarg; that's used by np.load.
