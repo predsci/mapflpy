@@ -48,8 +48,8 @@ c-----------------------------------------------------------------------
 c
 c
       character(*), parameter :: cname='MAPFL'
-      character(*), parameter :: cvers='2.1.0'
-      character(*), parameter :: cdate='04/16/2024'
+      character(*), parameter :: cvers='2.1.0_mapflpy'
+      character(*), parameter :: cdate='02/09/2026'
 c
       end module
 c#######################################################################
@@ -1546,8 +1546,8 @@ c
         f(:,:,n3+1)=b%r%f(:,:,1)
         z(1:n3)=b%r%scales(3)%f(:)
         z(n3+1)=b%r%scales(3)%f(1)+twopi
-        deallocate (b%r%f)
-        deallocate (b%r%scales(3)%f)
+        nullify (b%r%f)
+        nullify (b%r%scales(3)%f)
         b%r%dims(3)=n3+1
         b%r%f=>f
         b%r%scales(3)%f=>z
@@ -1561,8 +1561,8 @@ c
         f(:,:,n3+1)=b%t%f(:,:,1)
         z(1:n3)=b%t%scales(3)%f(:)
         z(n3+1)=b%t%scales(3)%f(1)+twopi
-        deallocate (b%t%f)
-        deallocate (b%t%scales(3)%f)
+        nullify (b%t%f)
+        nullify (b%t%scales(3)%f)
         b%t%dims(3)=n3+1
         b%t%f=>f
         b%t%scales(3)%f=>z
@@ -1576,8 +1576,8 @@ c
         f(:,:,n3+1)=b%p%f(:,:,1)
         z(1:n3)=b%p%scales(3)%f(:)
         z(n3+1)=b%p%scales(3)%f(1)+twopi
-        deallocate (b%p%f)
-        deallocate (b%p%scales(3)%f)
+        nullify (b%p%f)
+        nullify (b%p%scales(3)%f)
         b%p%dims(3)=n3+1
         b%p%f=>f
         b%p%scales(3)%f=>z

@@ -30,7 +30,8 @@ def dipole_field(lon: float = 180.,
                  r1: float = 10.0,
                  r_resolution: int = 71,
                  t_resolution: int = 91,
-                 p_resolution: int = 181
+                 p_resolution: int = 181,
+                 remove_phi_point: bool = False,
                  ) -> Tuple[NDArray[float], NDArray[float], NDArray[float], NDArray[float], NDArray[float], NDArray[float]]:
     """Generate a 3D dipole field in spherical coordinates.
 
@@ -54,6 +55,8 @@ def dipole_field(lon: float = 180.,
         number of theta points. Default is 91.
     p_resolution: int
         number of phi points. Default is 181.
+    remove_phi_point: bool
+        Option to delete the last phi point to emulate an "old" MAS file
 
     Returns
     -------
@@ -106,6 +109,12 @@ def dipole_field(lon: float = 180.,
     bz = (3 * z3d * mdotr / r3d ** 2 - mvec[2]) / r3d ** 3
 
     br, bt, bp = cvtosv(bx, by, bz, t3d, p3d)
+
+    if remove_phi_point:
+        br = br[:-1,:,:]
+        bt = bt[:-1,:,:]
+        bp = bp[:-1,:,:]
+        p = p[:-1]
 
     return br, bt, bp, r, t, p
 
