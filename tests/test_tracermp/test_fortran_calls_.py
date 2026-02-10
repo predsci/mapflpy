@@ -26,3 +26,13 @@ def test_trace_without_fieldline_validation(tracermp_instance, default_fields_as
     tracermp_instance.run()
     response = tracermp_instance.trace(launch_points=[1, 1, 1], buffer_size=10)
     assert isinstance(response, Traces)
+
+
+def test_multiple_run_calls(tracermp_instance, default_fields_aspaths):
+    tracermp_instance['verbose_'] = True
+    br_in, bt_in, bp_in = default_fields_aspaths
+    tracermp_instance.br = br_in
+    tracermp_instance.bt = bt_in
+    tracermp_instance.bp = bp_in
+    tracermp_instance.run()
+    tracermp_instance.run()
