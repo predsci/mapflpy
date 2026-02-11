@@ -11,9 +11,9 @@ import pytest
 
 from psi_io import wrhdf_3d
 
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from tests.utils import _MESH_RESOLUTION, _TRACING_DIRECTION, _OLD_MAS, _BASE_MESH_PARAMS, _BASE_LPS_PARAMS, _MESH_RESO_MAPPING, _TRACING_DIR_MAPPING, _OLD_MAS_MAPPING, _DOMAIN_RANGES
+from tests.utils import (_MESH_RESOLUTION, _TRACING_DIRECTION, _OLD_MAS, _BASE_MESH_PARAMS,
+                         _BASE_LPS_PARAMS, _MESH_RESO_MAPPING, _TRACING_DIR_MAPPING,
+                         _OLD_MAS_MAPPING, _DOMAIN_RANGES)
 
 
 @pytest.fixture(autouse=True)
