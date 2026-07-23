@@ -29,9 +29,10 @@ from typing import Optional, Iterable, Tuple, Callable
 import numpy as np
 from numpy.typing import NDArray, ArrayLike
 
-from mapflpy.globals import DEFAULT_BUFFER_SIZE, Traces, Mapping, PathType, DirectionType, ContextType
+from mapflpy.globals import DEFAULT_BUFFER_SIZE, Traces, Mapping, PathType, DirectionType, ContextType, SquashingFactor
 from mapflpy.tracer import TracerMP
-from mapflpy.utils import shift_phi_traces, shift_phi_lps, fetch_default_launch_points
+from mapflpy.utils import shift_phi_traces, shift_phi_lps, fetch_default_launch_points, modulo_twopi, get_half_mesh, calc_jacobian, calc_q
+from psi_io import interpolate_positions_from_hdf
 
 __all__ = [
     "run_forward_tracing",
@@ -414,6 +415,198 @@ def map_pt_backward(br: PathType,
 
     return mapping
 
+def expansion_factor(b_files, mapping, trace_radius, pss, tss):
+    """
+    Calculate the expansion factor of a given set of field line launch points and
+    their mapped end points.
+
+    Parameters
+    ----------
+    b_files : list of str
+         Specified the magnetic field (br, bt, bp ordered) files
+    mapping : :class:`~mapflpy.globals.Mapping`
+        A namedtuple containing mapping results (:class:`mapflpy.globals.Mapping`).
+    trace_radius : float
+        The radius from which to map.
+    pss : ndarray
+        phi points used to generate the mapping
+    tss : ndarray
+        theta points used to generate the mapping
+
+    Returns
+    -------
+    efl : ndarray
+        An array of the expansion factor
+    pss : ndarray
+        phi points used to generate the expansion factor
+    tss : ndarray
+        theta points used to generate the expansion factor
+
+
+    Notes
+    -----
+    - This function manually handles periodic boundaries in phi
+    """
+
+    # for the sake of interp: make sure phi's periodicity is obeyed
+    if (pss[0] < 0) or (pss[-1] > 2 * np.pi):
+        pss = np.mod(pss, np.pi * 2)
+    # make 2d launch point meshes so we can get the initial magnetic field
+    tss2d, pss2d = np.meshgrid(tss, pss)
+    ones2d_ss = np.ones_like(pss2d)
+
+    # we get [p, t] ordered arrays with the magnetic field values
+    # xfl0: radial launch point location
+    xfl0 = ones2d_ss * trace_radius
+    # xfl1: radial traced point location
+    xfl1 = np.transpose(mapping.r)
+    # bs0: radial magnetic field launch point
+    bs0 = interpolate_positions_from_hdf(b_files[0], xfl0, tss2d, pss2d)
+    # bs1: radial magnetic field traced point
+    bs1 = interpolate_positions_from_hdf(b_files[0], np.transpose(mapping.r), np.transpose(mapping.t),
+                                                np.transpose(mapping.p))
+
+    # logic checks:
+    # if we have a magnetic field of 0 in the denominator, set the expansion factor to 0:
+    efl_raw = np.where(bs0 == 0, 0, abs((bs0 * xfl0 ** 2) / (bs1 * xfl1 ** 2)))
+    # if we make it to the boundary, use our calculated expansion factor. otherwise, = 0:
+    efl = np.where(np.transpose(mapping.traced_to_boundary), efl_raw, 0)
+
+    return efl, pss, tss
+
+def compute_q_on_surface(b_files, direction='fwd', nproc=4, trace_radius=1, p_arr=np.asarray([]),
+                         t_arr=np.asarray([]), p_range=None, t_range=None, nppts=300, ntpts=150):
+    """
+    This wrapper calculates the squashing factor for a specified slice on a specified grid.
+
+    Parameters
+    ----------
+    b_files : list of str
+        Specified the magnetic field (br, bt, bp ordered) files
+    direction : str
+        either "fwd," "bwd," or "fwdbwd" to specify what direction of tracing (last is averaged)
+    nproc: int, optional
+        The number of processes to spawn. This should be equal to or less than the number of threads that can be used on the machine.
+    trace_radius : float, optional
+        The radius from which to map. Defaults to 1.
+    p_arr : ndarray,  optional
+        User-specified array for phi points used to generate the mapping. Must also specify t_arr. Either specify thse or t_range and p_range.
+    t_arr : ndarray,  optional
+        User-specified array for theta points used to generate the mapping. Must also specify p_arr. Either specify thse or t_range and p_range.
+    p_range : list or ndarray of two float, optional
+        User-specified start and end point in theta. defaults to [0, 2*np.pi].
+    t_range : list or ndarray of two float, optional
+        User-specified start and end point in theta. defaults to [0, np.pi].
+    nppts   : int, optional
+        Number of points desired in phi when p_range is in use
+    ntpts   : int, optional
+        Number of points desired in theta when t_range is in use
+
+    Returns
+    -------
+    squashing_factor : :class:`~mapflpy.globals.SquashingFactor`
+        A namedtuple containing the q, p, t results (:class:`mapflpy.globals.SquashingFactor`).
+
+    """
+    # default ranges for t, p
+    if t_range is None:
+        t_range = [0, np.pi]
+    if p_range is None:
+        p_range = [0, 2 * np.pi]
+
+    # creating theta and phi ranges for field lines from
+    # user-defined domains (or above default ranges)
+    if t_arr.shape[0] == 0:
+        tss_specified = np.linspace(t_range[0], t_range[1], ntpts)
+        pss_specified = np.linspace(p_range[0], p_range[1], nppts)
+
+        pss = get_half_mesh(pss_specified)
+
+        if (t_range[0] == 0) or (t_range[-1] == np.pi):
+
+            th = get_half_mesh(tss_specified)
+            tss = np.copy(th)
+
+            # clip the boundaries
+            tss[0] = 0.0
+            tss[-1] = np.pi
+            clipped = True
+        else:
+            tss = get_half_mesh(tss_specified)
+            clipped = False
+    # using the user-defined mesh for t, p
+    else:
+        th = get_half_mesh(t_arr)
+        tss = np.copy(th)
+        pss = get_half_mesh(p_arr)
+        if (tss[0] < 0) or (tss[-1] > np.pi):
+            # clip the boundaries
+            tss[0] = 0.0
+            tss[-1] = np.pi
+            clipped = True
+        else:
+            clipped = False
+
+    # field-line tracing by direction. starting with forward
+    if direction == 'fwd':
+        print('fwd mapping')
+        mapping = map_pt_forward(*b_files, pss, tss, radius=trace_radius, nproc=nproc)
+
+        # make the expansion factor.
+        ef_arr, p_ef, t_ef = expansion_factor(b_files, mapping, trace_radius, pss, tss)
+
+        # make the components of the jacobian
+        dtdt, dtdp, dpdt, dpdp = calc_jacobian(mapping, pss, tss)
+        # put the expansion factor, jacobian, and field lines together to get q
+        q, p, t = calc_q(dtdt, dtdp, dpdt, dpdp, mapping, pss, tss, ef_arr, clipped)
+
+        return SquashingFactor(q, p, t)
+
+    # field-line tracing by direction. now backward
+    elif direction == 'bwd':
+        print('bwd mapping')
+
+        mapping = map_pt_backward(*b_files, pss, tss, radius=trace_radius, nproc=nproc)
+
+        # make the expansion factor.
+        ef_arr, p_ef, t_ef = expansion_factor(b_files, mapping, trace_radius, pss, tss)
+
+        # make the components of the jacobian
+        dtdt, dtdp, dpdt, dpdp = calc_jacobian(mapping, pss, tss)
+
+        # put the expansion factor, jacobian, and field lines together to get q
+        q, p, t = calc_q(dtdt, dtdp, dpdt, dpdp, mapping, pss, tss, ef_arr, clipped)
+
+        return SquashingFactor(q, p, t)
+
+    # field-line tracing by direction. now take the average of the forward/backward
+    elif direction == 'fwdbwd':
+        print('fwdbwd mapping')
+
+        mapping_fwd = map_pt_forward(*b_files, pss, tss, radius=trace_radius, nproc=nproc)
+        mapping_bwd = map_pt_backward(*b_files, pss, tss, radius=trace_radius, nproc=nproc)
+
+        # make the expansion factor.
+        ef_arr_fwd, p_ef_f, t_ef_f = expansion_factor(b_files, mapping_fwd, trace_radius, pss, tss)
+        ef_arr_bwd, p_ef_b, t_ef_b = expansion_factor(b_files, mapping_bwd, trace_radius, pss, tss)
+
+        # make the components of the jacobian
+        dtdt_fwd, dtdp_fwd, dpdt_fwd, dpdp_fwd = calc_jacobian(mapping_fwd, pss, tss)
+        dtdt_bwd, dtdp_bwd, dpdt_bwd, dpdp_bwd = calc_jacobian(mapping_bwd, pss, tss)
+
+        # put the expansion factor, jacobian, and field lines together to get q
+        q_fwd, p_fwd, t_fwd = calc_q(dtdt_fwd, dtdp_fwd, dpdt_fwd, dpdp_fwd, mapping_fwd, pss, tss, ef_arr_fwd, clipped)
+        q_bwd, p_bwd, t_bwd = calc_q(dtdt_bwd, dtdp_bwd, dpdt_bwd, dpdp_bwd, mapping_bwd, pss, tss, ef_arr_bwd, clipped)
+
+        # reutrn the averaged quantity
+        p = 0.5 * (p_fwd + p_bwd)
+        t = 0.5 * (t_fwd + t_bwd)
+        q = 0.5 * (q_fwd + q_bwd)
+
+        return SquashingFactor(q, p, t)
+
+    else:
+        raise Exception("specify a valid direction: fwd, bwd, fwdbwd")
 
 def inter_domain_tracing(br_cor: PathType,
                          bt_cor: PathType,
